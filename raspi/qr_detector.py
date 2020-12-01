@@ -52,6 +52,7 @@ def process_image(img, pts, data, args):
 
     # Detect and draw QR-Code
     if args.detect_qr:
+        qrCodeDetector = cv2.QRCodeDetector()
         decodedText, points, _ = qrCodeDetector.detectAndDecode(image)
         if points is not None:
             pts = np.int32(pts).reshape(-1,2)            
@@ -67,17 +68,7 @@ def process_image(img, pts, data, args):
         print("Focus Measure: " + str(fm))
 
 
-
-def read_qr(image):
-    data, bbox, qr_code = qr_detector.detectAndDecode(image)
-
-    if len(data) > 0:
-        draw_qr_detection(image, bbox, data)
-
-
 camera_config = init_camera()
-qrCodeDetector = cv2.QRCodeDetector()
-
 print("Starting Preview")
 with open_camera(camera_config, video=True) as camera:
     rawCapture = PiRGBArray(camera)
