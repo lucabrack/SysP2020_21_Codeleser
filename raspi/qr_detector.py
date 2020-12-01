@@ -1,16 +1,16 @@
-import cv2
-import numpy as np
+import os
+import argparse
+import time
+from configparser import ConfigParser
+
 from picamera.array import PiRGBArray
 from picamera import PiCamera
-import time
-
-print("Starting Camera")
-camera = PiCamera()
-rawCapture = PiRGBArray(camera)
-
-time.sleep(0.1)
+import cv2
+import numpy as np
 
 qr_detector = cv2.QRCodeDetector()
+
+print("Starting Camera")
 
 def draw_qr_detection(img, pts, data):
     pts = np.int32(pts).reshape(-1,2)
@@ -29,11 +29,5 @@ def read_qr(image):
 
     if len(data) > 0:
         draw_qr_detection(image, bbox, data)
-    
-camera.capture(rawCapture, format="bgr")
-image = rawCapture.array
 
-read_qr(image)
-
-cv2.imshow("Image", image)
-cv2.waitKey(0)
+print("Terminating Program!")
