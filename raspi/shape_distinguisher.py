@@ -85,9 +85,9 @@ def open_camera(camera_config, video=False):
 def process_image(img, commands):
     copy = img.copy()
     gray = cv2.cvtColor(copy, cv2.COLOR_BGR2GRAY)
-    blur = cv2.medianBlur(gray,5)
+    blur = cv2.medianBlur(gray,19)
     thresh = cv2.adaptiveThreshold(blur,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-            cv2.THRESH_BINARY_INV,11,2)
+            cv2.THRESH_BINARY_INV,119,30)
     fill = thresh.copy()
     h, w = fill.shape[:2]
     mask = np.zeros((h+2,w+2), np.uint8)
@@ -95,16 +95,29 @@ def process_image(img, commands):
     fill_inv = cv2.bitwise_not(fill)
     im_out = thresh | fill_inv    
     cont, _ = cv2.findContours(im_out, 1, 2)
-    cont = cont[:-1]
-    c = max(cont, key = cv2.contourArea)
-    x,y,w,h = cv2.boundingRect(c)
+    cont = cont[:]
     im_out = cv2.cvtColor(im_out, cv2.COLOR_GRAY2BGR)
-    cv2.drawContours(im_out, c, -1, (255,0,0), 3)
+    
+    if len(cont) > 0:
+        c = max(cont, key = cv2.contourArea)
+        x,y,w,h = cv2.boundingRect(c)
+        cv2.drawContours(im_out, c, -1, (255,0,0), 3)
 
-    zoom = img[y:y+h,x:x+w]
-    zoom = cv2.resize(zoom, (img.shape[1],img.shape[0]))
+        zoom = img[y:y+h,x:x+w]
+        
+        zoom_gray = cv2.cvtColor(zoom, cv2.COLOR_BGR2GRAY)
+        zoom_blur = cv2.medianBlur(zoom_gray,3)
+        zoom_thresh = cv2.adaptiveThreshold(zoom_blur,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                cv2.THRESH_BINARY_INV,59,10)
 
-    return im_out, zoom
+        zoom = cv2.resize(zoom, (img.shape[1],img.shape[0]))
+        zoom_thresh = cv2.cvtColor(zoom_thresh, cv2.COLOR_GRAY2BGR)
+        zoom_thresh = cv2.resize(zoom_thresh, (img.shape[1],img.shape[0]))
+    else:
+        zoom = np.zeros_like(img)
+        zoom_thresh = zoom.copy()
+
+    return im_out, zoom, zoom_thresh
    
 
 
@@ -122,10 +135,11 @@ with open_camera(camera_config, video=True) as camera:
 
     for frame in camera.capture_continuous(rawCapture, format='bgr', use_video_port=True):
         image = frame.array
-        thresh, zoom = process_image(image, 'c')
+        thresh, zoom, zoom_thresh = process_image(image, 'c')
         result0 = cv2.hconcat([image,thresh])
-        result1 = cv2.hconcat([zoom,zoom])
+        result1 = cv2.hconcat([zoom,zoom_thresh])
         result = cv2.vconcat([result0,result1])
+        result = cv2.resize(result, (1024,728))
         cv2.imshow("Preview Video", result)
         key = cv2.waitKey(1) & 0xFF
         rawCapture.truncate(0) #empty output for next Image
