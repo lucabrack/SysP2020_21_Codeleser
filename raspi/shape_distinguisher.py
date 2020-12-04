@@ -93,17 +93,18 @@ def process_image(img, commands):
     mask = np.zeros((h+2,w+2), np.uint8)
     cv2.floodFill(fill, mask, (0,0), 255)
     fill_inv = cv2.bitwise_not(fill)
-    im_out = thresh | fill_inv
-    
+    im_out = thresh | fill_inv    
     cont, _ = cv2.findContours(im_out, 1, 2)
-    enclosure = cont
-    
-    func = enclosure_parser.get(commands, "nothing")
-    enclosure = func(im_out, cont)
+    cont = cont[:-1]
+    c = max(cont, key = cv2.contourArea)
+    x,y,w,h = cv2.boundingRect(c)
+    im_out = cv2.cvtColor(im_out, cv2.COLOR_GRAY2BGR)
+    cv2.drawContours(im_out, c, -1, (255,0,0), 3)
 
-    #cv2.drawContours(img, enclosure, -1, (255,0,0), 3)
+    zoom = img[y:y+h,x:x+w]
+    zoom = cv2.resize(zoom, (img.shape[1],img.shape[0]))
 
-    return cv2.cvtColor(im_out, cv2.COLOR_GRAY2BGR)
+    return im_out, zoom
    
 
 
@@ -121,8 +122,10 @@ with open_camera(camera_config, video=True) as camera:
 
     for frame in camera.capture_continuous(rawCapture, format='bgr', use_video_port=True):
         image = frame.array
-        thresh = process_image(image, 'c')
-        result = cv2.hconcat([image,thresh])
+        thresh, zoom = process_image(image, 'c')
+        result0 = cv2.hconcat([image,thresh])
+        result1 = cv2.hconcat([zoom,zoom])
+        result = cv2.vconcat([result0,result1])
         cv2.imshow("Preview Video", result)
         key = cv2.waitKey(1) & 0xFF
         rawCapture.truncate(0) #empty output for next Image
