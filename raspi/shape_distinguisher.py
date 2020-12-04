@@ -101,6 +101,10 @@ def process_image(img, commands):
     cont, _ = cv2.findContours(image, 1, 2)
     enclosure = cont
 
+    enclosure = commands()
+
+
+
     
 
 
