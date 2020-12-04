@@ -8,12 +8,6 @@ from picamera import PiCamera
 import cv2
 import numpy as np
 
-parser = argparse.ArgumentParser(description="Shape Distinguisher")
-parser.add_argument("-c", "--commands", type=str, 
-                    help="Give Features that should be displayed/printed out")
-parser.add_argument("-f", "--focus", nargs='+', type=str, 
-                    help="Give Features that should be displayed/printed out")
-args = parser.parse_args()
 
 def contour(image, contours):
         return contours
@@ -59,18 +53,14 @@ enclosure_parser = {
     'k'    : circle
 }
 
-feature_parser = {
-    'c'    : centroid,
-    'a'    : area,
-    'p'    : perimeter,
-    'l'    : length
-}
-
 
 def init_camera():
     print("Initialize Camera")
     config = ConfigParser()
-    config.read('raspi/config.ini')    
+    if os.path.exists('raspi/config.ini'):
+        config.read('raspi/config.ini')
+    else:
+        config.read('config.ini')
     camera_config = dict(config.items('camera_parameters'))
 
     return camera_config
@@ -94,18 +84,27 @@ def open_camera(camera_config, video=False):
 
 def process_image(img, commands):
     copy = img.copy()
-    image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    image = cv2.medianBlur(image,5)
-    image = cv2.adaptiveThreshold(image,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-            cv2.THRESH_BINARY,11,2)
-    cont, _ = cv2.findContours(image, 1, 2)
-    enclosure = cont
-
-    enclosure = commands()
-
-
-
+    gray = cv2.cvtColor(copy, cv2.COLOR_BGR2GRAY)
+    blur = cv2.medianBlur(gray,5)
+    thresh = cv2.adaptiveThreshold(blur,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+            cv2.THRESH_BINARY_INV,11,2)
+    fill = thresh.copy()
+    h, w = fill.shape[:2]
+    mask = np.zeros((h+2,w+2), np.uint8)
+    cv2.floodFill(fill, mask, (0,0), 255)
+    fill_inv = cv2.bitwise_not(fill)
+    im_out = thresh | fill_inv
     
+    cont, _ = cv2.findContours(im_out, 1, 2)
+    enclosure = cont
+    
+    func = enclosure_parser.get(commands, "nothing")
+    enclosure = func(im_out, cont)
+
+    #cv2.drawContours(img, enclosure, -1, (255,0,0), 3)
+
+    return cv2.cvtColor(im_out, cv2.COLOR_GRAY2BGR)
+   
 
 
 def measure_focus(img):
@@ -122,13 +121,18 @@ with open_camera(camera_config, video=True) as camera:
 
     for frame in camera.capture_continuous(rawCapture, format='bgr', use_video_port=True):
         image = frame.array
-        image = process_image(image, args.commands)
-        cv2.imshow("Preview Video", image)
+        thresh = process_image(image, 'c')
+        result = cv2.hconcat([image,thresh])
+        cv2.imshow("Preview Video", result)
         key = cv2.waitKey(1) & 0xFF
         rawCapture.truncate(0) #empty output for next Image
 
         # Break if 'q' key is pressed
         if key == ord('q'):
             break
+        elif key == ord('s'):
+            cv2.imwrite('image.png',image)
+            print('Image saved')
 
 print("Terminating Program!")
+cv2.destroyAllWindows()
