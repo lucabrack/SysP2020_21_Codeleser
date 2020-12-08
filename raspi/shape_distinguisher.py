@@ -37,7 +37,7 @@ def open_camera(camera_config, video=False):
     return camera
 
 # Process and draw images
-def process_image(img, enclosure_func, parameters):
+def process_image(img, enclosure_func, parameters, focus):
     # Define all parameters
     BLUR_FULL = int(parameters['blur_full'])
     THRESH_BLOCK_FULL = int(parameters['thresh_block_full'])
@@ -81,19 +81,30 @@ def process_image(img, enclosure_func, parameters):
         zoom_thresh = cv2.adaptiveThreshold(zoom_blur,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
                 cv2.THRESH_BINARY_INV,THRESH_BLOCK_ZOOM,THRESH_CONST_ZOOM)
 
-        cont_zoom, _ = cv2.findContours(zoom_thresh, 1, 2) # find contours
-        enc = []
-        # get the right enclosing for every contour found
-        for c in cont_zoom:
-            enc.append(enclosure_func(c))
-        
-        # Draw all the Contours
-        img_thresh = cv2.cvtColor(img_thresh, cv2.COLOR_GRAY2BGR) # We need every image in Color
-        cv2.rectangle(img_thresh,(x,y),(x+w,y+h),(0,255,0),2)
-        cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
-        cv2.drawContours(zoom, enc, -1, (255,0,0), 1)
-        zoom_thresh = cv2.cvtColor(zoom_thresh, cv2.COLOR_GRAY2BGR) # We need every image in Color
-        cv2.drawContours(zoom_thresh, enc, -1, (255,0,0), 1)
+        if focus: # Measure Focus
+            fm = int(cv2.Laplacian(zoom_gray, cv2.CV_64F).var())
+            cv2.putText(zoom, 'Focus: ' + str(fm), (10, 250), 0, 1, (0,255,0), 1, 16)
+
+            # We need every image in Color
+            img_thresh = cv2.cvtColor(img_thresh, cv2.COLOR_GRAY2BGR) 
+            zoom_thresh = cv2.cvtColor(zoom_thresh, cv2.COLOR_GRAY2BGR)            
+
+        else: # Don't measure focus, find and draw contours instead
+            cont_zoom, _ = cv2.findContours(zoom_thresh, 1, 2) # find contours
+            enc = []
+            # get the right enclosing for every contour found
+            for c in cont_zoom:
+                enc.append(enclosure_func(c))
+            
+            # We need every image in Color
+            img_thresh = cv2.cvtColor(img_thresh, cv2.COLOR_GRAY2BGR) 
+            zoom_thresh = cv2.cvtColor(zoom_thresh, cv2.COLOR_GRAY2BGR)
+
+            # Draw all the Contours        
+            cv2.rectangle(img_thresh,(x,y),(x+w,y+h),(0,255,0),2)
+            cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
+            cv2.drawContours(zoom, enc, -1, (255,0,0), 1)
+            cv2.drawContours(zoom_thresh, enc, -1, (255,0,0), 1)
 
         # Resize small images for concatenating (all images must be same size)
         zoom_display = cv2.resize(zoom, (img.shape[1],img.shape[0]))
@@ -137,10 +148,11 @@ with open_camera(config['camera_parameters'], video=True) as camera:
     rawCapture = PiRGBArray(camera)
     enclosure = contour # default enclosure
     create_param_window('Parameters')
+    en_focus_meas = False
     
     for frame in camera.capture_continuous(rawCapture, format='bgr', use_video_port=True):
         image = frame.array
-        image, thresh, zoom, zoom_thresh = process_image(image, enclosure, config['image_parameters']) # process the image
+        image, thresh, zoom, zoom_thresh = process_image(image, enclosure, config['image_parameters'], en_focus_meas) # process the image
 
         # concat the 4 images to one big one
         result0 = cv2.hconcat([image,thresh])
@@ -157,11 +169,16 @@ with open_camera(config['camera_parameters'], video=True) as camera:
         # Break if 'q' key is pressed
         if key == ord('q'):
             break
+
         # Save parameters if 's' key is pressed
         elif key == ord('s'):
             with open('config.ini', 'w') as configfile:
                 config.write(configfile)
             print('Parameters saved')
+
+        elif key == ord('f'):
+            en_focus_meas = not en_focus_meas
+
         # If a key from our enclosure list is pressed, change the
         # enclosure method
         elif chr(key) in enclosure_parser:
