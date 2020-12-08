@@ -7,5 +7,4 @@ echo -e "Working on:\n"
 git log -1
 source /home/pi/.virtualenvs/base/bin/activate
 echo ""
-python raspi/shape_distinguisher.py
-
+python preview.py

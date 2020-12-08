@@ -17,10 +17,7 @@ from lib.enclosings import *
 
 ## Read config file
 config = ConfigParser()
-if os.path.exists('raspi/config.ini'):
-    config.read('raspi/config.ini')
-else:
-    config.read('config.ini')
+config.read('config.ini')
 
 # Start Camera Module
 def open_camera(camera_config, video=False):
