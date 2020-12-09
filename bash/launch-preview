@@ -4,8 +4,8 @@
 
 echo "SysP2020-21 Codeleser"
 echo ""
-cd /home/pi/Projects/SysP2020_21_Codeleser
+cd /home/pi/Projekte/SysP2020_21_Codeleser
 echo -e "Working on:\n"
-git log -1
+git show -s --format=medium --abbrev-commit
 echo ""
 python3 preview.py
