@@ -1,12 +1,15 @@
 import socket
 
 
-HOST = 'raspi'
-PORT = 7777
+HOST = socket.gethostbyname('raspi')
+PORT = 65432
+
+print(HOST)
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.connect((HOST, PORT))
-    s.sendall(b'Hello, world')
+    text = input('What to send:')
+    s.sendall(text.encode())
     data = s.recv(1024)
 
-print('Received', repr(data))
+print('Received', data.decode())
