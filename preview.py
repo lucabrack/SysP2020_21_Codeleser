@@ -34,8 +34,8 @@ def open_camera(camera_config, video=False):
     return camera
 
 # Process and draw images
-def process_image(img, enclosure_func, parameters, focus):
-    # Define all parameters
+def process_image(img, enclosure_func, parameters):
+    # Define all parameters from config file
     BLUR_FULL = int(parameters['blur_full'])
     THRESH_BLOCK_FULL = int(parameters['thresh_block_full'])
     THRESH_CONST_FULL = int(parameters['thresh_const_full'])
@@ -49,6 +49,9 @@ def process_image(img, enclosure_func, parameters, focus):
     gray = cv2.cvtColor(copy, cv2.COLOR_BGR2GRAY)
     # blur the image to filter out unwanted noise
     blur = cv2.medianBlur(gray,BLUR_FULL)
+
+    # create a blank image to draw focus on
+    focus_img = np.zeros((100, 400, 3), np.uint8)
 
     # Adaptive thresholding to get a black and white image
     thresh = cv2.adaptiveThreshold(blur,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
@@ -64,7 +67,7 @@ def process_image(img, enclosure_func, parameters, focus):
 
     # find all contours on the full image and hopefully also the border rectangles
     cont, _ = cv2.findContours(img_thresh, 1, 2)
-        
+      
     # Check if any contours were found
     if len(cont) > 0:
         c = max(cont, key = cv2.contourArea) # find contour with biggest Area
@@ -74,38 +77,41 @@ def process_image(img, enclosure_func, parameters, focus):
         zoom = img.copy()[y:y+h,x:x+w] # cut the area within the border out of the original image 
         zoom_gray = gray.copy()[y:y+h,x:x+w] # make the same but with the gray image (saves us the grayscaling)
         
+        # blur the image to filter out unwanted noise
         zoom_blur = cv2.medianBlur(zoom_gray,BLUR_ZOOM)
+        # Adaptive thresholding to get a black and white image
         zoom_thresh = cv2.adaptiveThreshold(zoom_blur,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
                 cv2.THRESH_BINARY_INV,THRESH_BLOCK_ZOOM,THRESH_CONST_ZOOM)
+         
+        # find the contours on the zoom image
+        cont_zoom, _ = cv2.findContours(zoom_thresh, 1, 2) # find contours
+        # get the right enclosing for every contour found
+        enc = []
+        for c in cont_zoom:
+            enc.append(enclosure_func(c))
+        
+        # We need every image in Color
+        img_thresh = cv2.cvtColor(img_thresh, cv2.COLOR_GRAY2BGR) 
+        zoom_thresh = cv2.cvtColor(zoom_thresh, cv2.COLOR_GRAY2BGR)
 
-        if focus: # Measure Focus
-            fm = int(cv2.Laplacian(zoom_gray, cv2.CV_64F).var())
-            cv2.putText(zoom, 'Focus: ' + str(fm), (10, 250), 0, 1, (0,255,0), 1, 16)
-
-            # We need every image in Color
-            img_thresh = cv2.cvtColor(img_thresh, cv2.COLOR_GRAY2BGR) 
-            zoom_thresh = cv2.cvtColor(zoom_thresh, cv2.COLOR_GRAY2BGR)            
-
-        else: # Don't measure focus, find and draw contours instead
-            cont_zoom, _ = cv2.findContours(zoom_thresh, 1, 2) # find contours
-            enc = []
-            # get the right enclosing for every contour found
-            for c in cont_zoom:
-                enc.append(enclosure_func(c))
-            
-            # We need every image in Color
-            img_thresh = cv2.cvtColor(img_thresh, cv2.COLOR_GRAY2BGR) 
-            zoom_thresh = cv2.cvtColor(zoom_thresh, cv2.COLOR_GRAY2BGR)
-
-            # Draw all the Contours        
-            cv2.rectangle(img_thresh,(x,y),(x+w,y+h),(0,255,0),2)
-            cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
-            cv2.drawContours(zoom, enc, -1, (255,0,0), 1)
-            cv2.drawContours(zoom_thresh, enc, -1, (255,0,0), 1)
+        # Draw all the Contours        
+        cv2.rectangle(img_thresh,(x,y),(x+w,y+h),(0,255,0),2)
+        cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
+        cv2.drawContours(zoom, enc, -1, (255,0,0), 1)
+        cv2.drawContours(zoom_thresh, enc, -1, (255,0,0), 1)
 
         # Resize small images for concatenating (all images must be same size)
         zoom_display = cv2.resize(zoom, (img.shape[1],img.shape[0]))
         zoom_thresh_display = cv2.resize(zoom_thresh, (img.shape[1],img.shape[0]))
+
+        # Measure the focus of the zoom image and draw it on the focus image
+        fm = int(cv2.Laplacian(zoom_gray, cv2.CV_64F).var())
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        text = "Focus: " + str(fm)
+        textsize = cv2.getTextSize(text, font, 1, 2)[0]
+        textX = 20 #int((focus_img.shape[1] - textsize[0]) / 2)
+        textY = int((focus_img.shape[0] + textsize[1]) / 2)
+        cv2.putText(focus_img, text, (textX, textY), font, 1, (255, 255, 255), 2)
 
     else: # No Contours were found -> display black images
         img_thresh = cv2.cvtColor(img_thresh, cv2.COLOR_GRAY2BGR) # We need every image in Color
@@ -113,7 +119,7 @@ def process_image(img, enclosure_func, parameters, focus):
         zoom_thresh_display = zoom_display.copy()
   
 
-    return img, img_thresh, zoom_display, zoom_thresh_display
+    return img, img_thresh, zoom_display, zoom_thresh_display, focus_img
 
 
 def measure_focus(img):
@@ -145,11 +151,10 @@ with open_camera(config['camera_parameters'], video=True) as camera:
     rawCapture = PiRGBArray(camera)
     enclosure = contour # default enclosure
     create_param_window('Parameters')
-    en_focus_meas = False
     
     for frame in camera.capture_continuous(rawCapture, format='bgr', use_video_port=True):
         image = frame.array
-        image, thresh, zoom, zoom_thresh = process_image(image, enclosure, config['image_parameters'], en_focus_meas) # process the image
+        image, thresh, zoom, zoom_thresh, focus_img = process_image(image, enclosure, config['image_parameters']) # process the image
 
         # concat the 4 images to one big one
         result0 = cv2.hconcat([image,thresh])
@@ -160,6 +165,7 @@ with open_camera(config['camera_parameters'], video=True) as camera:
 
         # display in separate window
         cv2.imshow("Preview", result)
+        cv2.imshow('Parameters', focus_img)
         key = cv2.waitKey(1) & 0xFF
         rawCapture.truncate(0) #empty output for next Image
 
@@ -173,16 +179,11 @@ with open_camera(config['camera_parameters'], video=True) as camera:
                 config.write(configfile)
             print('Parameters saved')
 
-        elif key == ord('f'):
-            en_focus_meas = not en_focus_meas
-
         # If a key from our enclosure list is pressed, change the
         # enclosure method
         elif chr(key) in enclosure_parser:
             print(enclosure_parser[chr(key)].__name__)
             enclosure = enclosure_parser[chr(key)]
-
-
 
 
 print("Terminating Program!")
