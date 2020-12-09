@@ -1,10 +1,11 @@
 #!/bin/bash
 
+# Short and simple Bash Script to start the preview
+
 echo "SysP2020-21 Codeleser"
 echo ""
 cd /home/pi/Projects/SysP2020_21_Codeleser
 echo -e "Working on:\n"
 git log -1
-source /home/pi/.virtualenvs/base/bin/activate
 echo ""
-python preview.py
+python3 preview.py
