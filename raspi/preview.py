@@ -19,20 +19,16 @@ config = ConfigParser()
 config.read('config.ini')
 
 def change_image_param(val, tb_name):
-    if val > 1:
-        if val % 2 == 1:
-            config['image_parameters'][tb_name] = str(val)
-        else:
-            config['image_parameters'][tb_name] = str(val+1)
+    config['image_parameters'][tb_name] = str(val)
 
 def create_param_window(win_name):
     cv2.namedWindow(win_name)
-    cv2.createTrackbar('blur_full', win_name, int(config['image_parameters']['blur_full']), 51, lambda x: change_image_param(x, 'blur_full'))
-    cv2.createTrackbar('block_full', win_name, int(config['image_parameters']['thresh_block_full']), 199, lambda x: change_image_param(x, 'thresh_block_full'))
-    cv2.createTrackbar('const_full', win_name, int(config['image_parameters']['thresh_const_full']), 99, lambda x: change_image_param(x, 'thresh_const_full'))
-    cv2.createTrackbar('blur_zoom', win_name, int(config['image_parameters']['blur_roi']), 51, lambda x: change_image_param(x, 'blur_roi'))
-    cv2.createTrackbar('block_zoom', win_name, int(config['image_parameters']['thresh_block_roi']), 199, lambda x: change_image_param(x, 'thresh_block_roi'))
-    cv2.createTrackbar('const_zoom', win_name, int(config['image_parameters']['thresh_const_roi']), 99, lambda x: change_image_param(x, 'thresh_const_roi'))
+    cv2.createTrackbar('blur_full', win_name, int(config['image_parameters']['blur_full']), 100, lambda x: change_image_param(x, 'blur_full'))
+    cv2.createTrackbar('block_full', win_name, int(config['image_parameters']['thresh_block_full']), 100, lambda x: change_image_param(x, 'thresh_block_full'))
+    cv2.createTrackbar('const_full', win_name, int(config['image_parameters']['thresh_const_full']), 100, lambda x: change_image_param(x, 'thresh_const_full'))
+    cv2.createTrackbar('blur_roi', win_name, int(config['image_parameters']['blur_roi']), 100, lambda x: change_image_param(x, 'blur_roi'))
+    cv2.createTrackbar('block_roi', win_name, int(config['image_parameters']['thresh_block_roi']), 100, lambda x: change_image_param(x, 'thresh_block_roi'))
+    cv2.createTrackbar('const_roi', win_name, int(config['image_parameters']['thresh_const_roi']), 100, lambda x: change_image_param(x, 'thresh_const_roi'))
 
 # Start live preview
 print("Starting Preview")
