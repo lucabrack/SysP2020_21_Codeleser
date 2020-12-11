@@ -29,12 +29,32 @@ def grayscale(img):
 def bgr(img):
     return cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
+# Scale the thresholding block with the size of the Image
+def scale_block(img, param):
+    val = int(param) / 5 # reduce to 20% of the image size
+    val_pix = int(img.shape[1] * val / 100)
+    if val_pix % 2 == 1:
+        return val_pix
+    else:
+        return val_pix + 1
+
+# Scale the blurring block with the size of the Image
+def scale_blur(img, param):
+    val = int(param) / 10 # reduce to 10% of the image size
+    val_pix = int(img.shape[1] * val / 100)
+    if val_pix > 15:
+        return 15
+    elif val_pix % 2 == 1:
+        return val_pix
+    else:
+        return val_pix + 1
+
 # Find and return coordinates from Region Of Interest (ROI)
-def get_roi_attr(img_gray, parameters):
+def get_roi_attr(img_gray, image_parameters):
     # Define all parameters from config file
-    BLUR_FULL = int(parameters['blur_full'])
-    THRESH_BLOCK_FULL = int(parameters['thresh_block_full'])
-    THRESH_CONST_FULL = int(parameters['thresh_const_full'])
+    BLUR_FULL = scale_blur(img_gray, image_parameters['blur_full'])
+    THRESH_BLOCK_FULL = scale_block(img_gray, image_parameters['thresh_block_full'])
+    THRESH_CONST_FULL = int(image_parameters['thresh_const_full'])
 
     # blur the image to filter out unwanted noise
     blur = cv2.medianBlur(img_gray,BLUR_FULL)
@@ -70,11 +90,11 @@ def get_roi(img, roi_attr):
     return img.copy()[y:y+h,x:x+w]
 
 # Get all contours in the Region Of Interest (ROI)
-def get_roi_contours(roi_gray, parameters):
+def get_roi_contours(roi_gray, image_parameters):
     # Define all parameters from config file
-    BLUR_ROI = int(parameters['blur_roi'])
-    THRESH_BLOCK_ROI = int(parameters['thresh_block_roi'])
-    THRESH_CONST_ROI = int(parameters['thresh_const_roi'])
+    BLUR_ROI = scale_blur(roi_gray, image_parameters['blur_roi'])
+    THRESH_BLOCK_ROI = scale_block(roi_gray, image_parameters['thresh_block_roi'])
+    THRESH_CONST_ROI = int(image_parameters['thresh_const_roi'])
 
     # blur the image to filter out unwanted noise
     roi_blur = cv2.medianBlur(roi_gray,BLUR_ROI)
@@ -86,23 +106,26 @@ def get_roi_contours(roi_gray, parameters):
 
     return cont_roi, roi_thresh
 
-
+# Draw all the contours given in a list
 def draw_contours(img, contours):
     cv2.drawContours(img, contours, -1, (255,0,0), 1)
 
+# Draw a rectangle from x-,y-coordinates and width/height
 def draw_rectangle(img, rec_attr):
     x,y,w,h = rec_attr
     cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
 
+# Measure the focus from a grayscale image
 def measure_focus(roi_gray):
     return cv2.Laplacian(roi_gray, cv2.CV_64F).var()
 
-# Process and draw images
-def get_preview(img, enclosure_func, parameters):   
+
+# Get all 4 Images for the live Preview, plus the focus image
+def get_preview(img, enclosure_func, image_parameters):   
     img_gray = grayscale(img)
 
     # Search for Region of Interest
-    roi_attr, img_bin = get_roi_attr(img_gray, parameters)
+    roi_attr, img_bin = get_roi_attr(img_gray, image_parameters)
     
     # Make a blank image for Resolution output
     focus_img = np.zeros((100,400,3), np.uint8)
@@ -112,7 +135,7 @@ def get_preview(img, enclosure_func, parameters):
         roi = get_roi(img, roi_attr)
         roi_gray = get_roi(img_gray, roi_attr)
 
-        contours, roi_bin = get_roi_contours(roi_gray, parameters)
+        contours, roi_bin = get_roi_contours(roi_gray, image_parameters)
         
         # find contours
         # get the right enclosing for every contour found
@@ -151,3 +174,34 @@ def get_preview(img, enclosure_func, parameters):
 
     return img, img_bin, roi_display, roi_bin_display, focus_img
 
+
+def get_image_infos(img, image_parameters, save_imgs=False):
+    img_gray = grayscale(img)
+    
+    # Search for Region of Interest
+    roi_attr, img_bin = get_roi_attr(img_gray, image_parameters)
+
+    if save_imgs:
+        cv2.imwrite('./raspi/lib/DEBUG_IMG/full_img.png', img)
+        cv2.imwrite('./raspi/lib/DEBUG_IMG/binarized_img.png', img_bin)   
+    
+    if roi_attr is not None:
+        roi_gray = get_roi(img_gray, roi_attr)
+        cv2.imwrite('./lib/DEBUG_IMG/roi.png', roi_gray)
+    
+        contours, roi_bin = get_roi_contours(roi_gray, image_parameters)
+        cv2.imwrite('./lib/DEBUG_IMG/binarized_roi.png', roi_bin)
+
+        _, enclose_funcs = enclosure_parser.items()
+
+        
+        i = 0
+        
+        for c in contours:
+            for enclose_func in enclose_funcs:
+                enclosing = enclose_func(c)
+                
+                roi_copy = bgr(roi_gray.copy())
+                
+                draw_contours(roi_copy, enclosing)
+                cv2.imwrite('./lib/DEBUG_IMG/roi_' + str(i), roi_copy)
