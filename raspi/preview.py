@@ -1,5 +1,6 @@
 # import important system libraries
 import os
+import sys
 import argparse
 import time
 from configparser import ConfigParser
@@ -16,7 +17,12 @@ import lib.image_processing as img_proc
 
 ## Read config file
 config = ConfigParser()
-config.read('config.ini')
+if os.path.exists('config.ini'):
+    config.read('config.ini')
+elif os.path.exists('./raspi/config.ini'):
+    config.read('./raspi/config.ini')
+else:
+    sys.exit('ERROR: No config file found!')
 
 def change_image_param(val, tb_name):
     config['image_parameters'][tb_name] = str(val)
