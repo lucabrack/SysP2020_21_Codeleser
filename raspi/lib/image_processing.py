@@ -90,8 +90,10 @@ def get_roi(img, roi_attr):
     # cut the roi out of the image
     # use only 90% of the image to leave out the border
     x,y,w,h = roi_attr
-    offset= int(0.1*x)
-    return img.copy()[y+offset:y+h-offset,x+offset:x+w-offset]
+    offset_ratio = 0.07
+    offset_x= int(offset_ratio*w)
+    offset_y= int(offset_ratio*h)
+    return img.copy()[y+offset_y:y+h-offset_y,x+offset_x:x+w-offset_x]
 
 # Get all contours in the Region Of Interest (ROI)
 def get_roi_contours(roi_gray, image_parameters):
