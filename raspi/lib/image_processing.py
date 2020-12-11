@@ -33,7 +33,9 @@ def bgr(img):
 def scale_block(img, param):
     val = int(param) / 5 # reduce to 20% of the image size
     val_pix = int(img.shape[1] * val / 100)
-    if val_pix % 2 == 1:
+    if val_pix <= 1:
+        return 3
+    elif val_pix % 2 == 1:
         return val_pix
     else:
         return val_pix + 1
@@ -86,8 +88,10 @@ def get_roi_attr(img_gray, image_parameters):
 # Get Region of Interest (ROI)
 def get_roi(img, roi_attr):
     # cut the roi out of the image
+    # use only 90% of the image to leave out the border
     x,y,w,h = roi_attr
-    return img.copy()[y:y+h,x:x+w]
+    offset= int(0.1*x)
+    return img.copy()[y+offset:y+h-offset,x+offset:x+w-offset]
 
 # Get all contours in the Region Of Interest (ROI)
 def get_roi_contours(roi_gray, image_parameters):
@@ -104,7 +108,18 @@ def get_roi_contours(roi_gray, image_parameters):
     # find the contours on the zoom image
     cont_roi, _ = cv2.findContours(roi_thresh, 1, 2)
 
-    return cont_roi, roi_thresh
+    roi_area = roi_gray.shape[0] * roi_gray.shape[1]
+    contour_threshold = 1 / 3000
+
+    # Only accept Contours that have a minimum area
+    cont = []
+    for c in cont_roi:
+        if c.size > 4: # more than 2 points have to be found (2 coorinates per point -> 2 points * 2 coordinates = size 4)
+            area_ratio = cv2.contourArea(c) / roi_area # relative area to make it independent of image size
+            if area_ratio > contour_threshold:
+                cont.append(c)
+    
+    return cont, roi_thresh
 
 # Draw all the contours given in a list
 def draw_contours(img, contours):
@@ -175,7 +190,7 @@ def get_preview(img, enclosure_func, image_parameters):
     return img, img_bin, roi_display, roi_bin_display, focus_img
 
 
-def get_image_infos(img, image_parameters, save_imgs=False):
+def get_image_infos(img, image_parameters, save_imgs=True):
     img_gray = grayscale(img)
     
     # Search for Region of Interest
@@ -187,21 +202,21 @@ def get_image_infos(img, image_parameters, save_imgs=False):
     
     if roi_attr is not None:
         roi_gray = get_roi(img_gray, roi_attr)
-        cv2.imwrite('./lib/DEBUG_IMG/roi.png', roi_gray)
+        cv2.imwrite('./raspi/lib/DEBUG_IMG/roi.png', roi_gray)
     
         contours, roi_bin = get_roi_contours(roi_gray, image_parameters)
-        cv2.imwrite('./lib/DEBUG_IMG/binarized_roi.png', roi_bin)
+        cv2.imwrite('./raspi/lib/DEBUG_IMG/binarized_roi.png', roi_bin)
 
-        _, enclose_funcs = enclosure_parser.items()
+        enclose_funcs = list(enclosure_parser.values())
 
-        
-        i = 0
-        
-        for c in contours:
-            for enclose_func in enclose_funcs:
-                enclosing = enclose_func(c)
-                
-                roi_copy = bgr(roi_gray.copy())
-                
-                draw_contours(roi_copy, enclosing)
-                cv2.imwrite('./lib/DEBUG_IMG/roi_' + str(i), roi_copy)
+        for enclose_func in enclose_funcs:
+            enc = []
+            for c in contours:            
+                enc.append(enclose_func(c))
+
+            roi_copy = bgr(roi_gray.copy())                
+            draw_contours(roi_copy, enc)
+            cv2.imwrite('./raspi/lib/DEBUG_IMG/roi_' + enclose_func.__name__ + '.png', roi_copy)
+    
+    else:
+        print("No contours on ROI found.")
