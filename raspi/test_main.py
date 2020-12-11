@@ -1,5 +1,6 @@
 # import important system libraries
 import os
+import sys
 import argparse
 import time
 from configparser import ConfigParser
@@ -15,13 +16,18 @@ import lib.image_processing as img_proc
 
 ## Read config file
 config = ConfigParser()
-config.read('./raspi/config.ini')
+if os.path.exists('config.ini'):
+    config.read('config.ini')
+elif os.path.exists('./raspi/config.ini'):
+    config.read('./raspi/config.ini')
+else:
+    sys.exit('ERROR: No config file found!')
 
 # Start Camera
 print("Starting Camera")
 with img_proc.open_camera(config['camera_parameters']) as camera:
     rawCapture = PiRGBArray(camera)
-    time.sleep(0.1)
+    time.sleep(2)
     print("Camera opened")
 
     camera.capture(rawCapture, format='bgr')
