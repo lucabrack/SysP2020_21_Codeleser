@@ -18,11 +18,12 @@ import lib.image_processing as img_proc
 ## Read config file
 config = ConfigParser()
 if os.path.exists('config.ini'):
-    config.read('config.ini')
+    config_path = 'config.ini'    
 elif os.path.exists('./raspi/config.ini'):
-    config.read('./raspi/config.ini')
+    config_path = './raspi/config.ini'
 else:
     sys.exit('ERROR: No config file found!')
+config.read(config_path)
 
 def change_image_param(val, tb_name):
     config['image_parameters'][tb_name] = str(val)
@@ -67,7 +68,7 @@ with img_proc.open_camera(config['camera_parameters'], preview=True) as camera:
 
         # Save parameters if 's' key is pressed
         elif key == ord('s'):
-            with open('config.ini', 'w') as configfile:
+            with open(config_path, 'w') as configfile:
                 config.write(configfile)
             print('Parameters saved')
 
