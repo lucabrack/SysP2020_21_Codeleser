@@ -1,3 +1,7 @@
+import os
+import shutil
+from datetime import datetime
+
 # import image processing libraries
 from picamera.array import PiRGBArray
 from picamera import PiCamera
@@ -6,6 +10,10 @@ import numpy as np
 import math
 
 from lib.enclosings import *
+from lib.contour_features import *
+
+ROOT_SAVE_PATH = './raspi/lib/DEBUG_IMG/'
+
 
 # Start Camera Module
 def open_camera(camera_config, preview=False):
@@ -90,7 +98,7 @@ def get_roi(img, roi_attr):
     # cut the roi out of the image
     # use only 90% of the image to leave out the border
     x,y,w,h = roi_attr
-    offset_ratio = 0.07
+    offset_ratio = 0.075
     offset_x= int(offset_ratio*w)
     offset_y= int(offset_ratio*h)
     return img.copy()[y+offset_y:y+h-offset_y,x+offset_x:x+w-offset_x]
@@ -134,7 +142,8 @@ def draw_rectangle(img, rec_attr):
 
 # Measure the focus from a grayscale image
 def measure_focus(roi_gray):
-    return cv2.Laplacian(roi_gray, cv2.CV_64F).var()
+    focus = cv2.Laplacian(roi_gray, cv2.CV_64F).var()
+    return focus * roi_gray.shape[1] # scale the focus with image width to not make it dependent on image size
 
 
 # Get all 4 Images for the live Preview, plus the focus image
@@ -193,32 +202,105 @@ def get_preview(img, enclosure_func, image_parameters):
 
 
 def get_image_infos(img, image_parameters, save_imgs=True):
+    # All the infos get saved in one consecutive string
+    info_str = ""
+    
     img_gray = grayscale(img)
     
     # Search for Region of Interest
     roi_attr, img_bin = get_roi_attr(img_gray, image_parameters)
 
     if save_imgs:
-        cv2.imwrite('./raspi/lib/DEBUG_IMG/full_img.png', img)
-        cv2.imwrite('./raspi/lib/DEBUG_IMG/binarized_img.png', img_bin)   
+        folder_path = create_img_folder(ROOT_SAVE_PATH)
+        save_img(folder_path, "00_img", img)
+        img_bin_bgr = bgr(img_bin.copy())
+        draw_rectangle(img_bin_bgr, roi_attr)
+        save_img(folder_path, "01_img_binarized", img_bin_bgr) 
     
     if roi_attr is not None:
-        roi_gray = get_roi(img_gray, roi_attr)
-        cv2.imwrite('./raspi/lib/DEBUG_IMG/roi.png', roi_gray)
-    
+        roi_x, roi_y = get_center_roi(roi_attr, img)
+        roi_area, roi_area_scaled = get_area_roi(roi_attr, img)
+        info_str = build_info_str(info_str, roi_x)
+        info_str = build_info_str(info_str, roi_y)
+        info_str = build_info_str(info_str, roi_area_scaled)
+                
+        roi_gray = get_roi(img_gray, roi_attr)    
         contours, roi_bin = get_roi_contours(roi_gray, image_parameters)
-        cv2.imwrite('./raspi/lib/DEBUG_IMG/binarized_roi.png', roi_bin)
 
+        info_str = build_info_str(info_str, int(measure_focus(roi_gray)))
+        info_str = build_info_str(info_str, len(contours))
+
+        if save_imgs:
+            save_img(folder_path, "02_roi", roi_gray)
+            save_img(folder_path, "03_roi_binarized", roi_bin)
+
+        del enclosure_parser['n']
         enclose_funcs = list(enclosure_parser.values())
 
-        for enclose_func in enclose_funcs:
+        for i, enclose_func in enumerate(enclose_funcs):
             enc = []
-            for c in contours:            
-                enc.append(enclose_func(c))
+            info_str = build_info_str(info_str, enclose_func.__name__)
+            for c in contours:
+                enclosing = enclose_func(c)            
+                enc.append(enclosing)
+                cx, cy = get_center(enclosing, roi_gray)
+                area = get_area(enclosing, roi_area)
+                perimeter = get_perimeter(enclosing, roi_area)
+                orientation = get_orientation(enclosing)
+                info_str = build_info_str(info_str, cx)
+                info_str = build_info_str(info_str, cy)
+                info_str = build_info_str(info_str, area)
+                info_str = build_info_str(info_str, perimeter)
+                info_str = build_info_str(info_str, orientation)
 
-            roi_copy = bgr(roi_gray.copy())                
-            draw_contours(roi_copy, enc)
-            cv2.imwrite('./raspi/lib/DEBUG_IMG/roi_' + enclose_func.__name__ + '.png', roi_copy)
-    
+            if save_imgs:
+                roi_copy = bgr(roi_gray.copy())
+                draw_contours(roi_copy, enc)
+                save_img(folder_path, f'{i+4:02d}_roi_' + enclose_func.__name__, roi_copy)
+                with open(os.path.join(folder_path, "image_infos.txt"), 'w') as txt:
+                    txt.write(info_str)
+
     else:
+        info_str = "Nothing found"
         print("No contours on ROI found.")
+
+    return info_str
+
+
+def create_img_folder(root_path, max_saves=10):
+    if not os.path.exists(root_path):
+        print("Images can not be saved, because " + root_path + " does not exist.")
+        return None
+    
+    while len(os.listdir(root_path)) > max_saves:
+        folders = [os.path.join(root_path, x) for x in os.listdir(root_path) if os.path.isdir(os.path.join(root_path,x))]
+        oldest_folder = min(folders, key=os.path.getctime)
+        shutil.rmtree(oldest_folder)
+    
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    folder_path = os.path.join(root_path, timestamp)
+    os.mkdir(folder_path)
+
+    return folder_path
+
+
+def save_img(folder_path, img_name, img):
+    if folder_path is not None:
+        full_path = os.path.join(folder_path, img_name + '.png')
+        success = cv2.imwrite(full_path, img)
+        if not success:
+            print("Saving image " + full_path + " failed.")
+
+
+def build_info_str(info_str, value):
+    if len(info_str) > 0:
+        info_str += ','
+    if isinstance(value, int):
+        info_str += str(value)
+    elif isinstance(value, float):
+        info_str += f'{value:.6f}'
+    elif isinstance(value, str):
+        info_str += value
+    else:
+        print('Unhandled instance for info string: ' + str(type(value)))
+    return info_str
