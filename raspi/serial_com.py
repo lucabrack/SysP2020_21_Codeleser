@@ -58,7 +58,7 @@ while True:
 
     # Take image, process it and send the info string
     elif data_str == 'shoot':
-        cam_led.blink()
+        cam_led.blink(0.3,0.3)
         image = cam.capture_image()
         info_str = get_image_info(image, config.param['image_parameters'])
         cam_led.on()
