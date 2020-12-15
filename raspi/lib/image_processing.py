@@ -9,20 +9,6 @@ from lib.enclosings import *
 from lib.contour_features import *
 
 
-# Start Camera Module
-def open_camera(camera_config, preview=False):
-    if preview:
-        w = int(camera_config['vid_width'])
-        h = int(camera_config['vid_height'])
-    else:
-        w = int(camera_config['frame_width'])
-        h = int(camera_config['frame_height'])
-    resolution = (w,h)
-
-    camera = PiCamera(resolution=resolution, framerate=int(camera_config['frame_rate']))
-    
-    return camera
-
 # Convert image to grayscale
 def grayscale(img):
     return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
