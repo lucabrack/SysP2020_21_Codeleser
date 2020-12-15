@@ -16,9 +16,10 @@ from lib.enclosings import *
 from lib.contour_features import *
 import lib.image_processing as img_proc
 from lib.config_reader import ConfigReader
+from lib.cam import Camera
 
 # Define root path to save the debugging images
-ROOT_SAVE_PATH = './raspi/lib/DEBUG_IMG/'
+ROOT_SAVE_PATH = './raspi/debug/'
 
 
 ## Get all infos of every contour found
@@ -36,7 +37,8 @@ def get_image_info(img, image_parameters, save_imgs=True):
         folder_path = create_img_folder(ROOT_SAVE_PATH)
         save_img(folder_path, "00_img", img)
         img_bin_bgr = img_proc.bgr(img_bin.copy())
-        img_proc.draw_rectangle(img_bin_bgr, roi_attr)
+        if roi_attr is not None:
+            img_proc.draw_rectangle(img_bin_bgr, roi_attr)
         save_img(folder_path, "01_img_binarized", img_bin_bgr) 
     
     # Check if the Region of Interest was found
@@ -61,8 +63,8 @@ def get_image_info(img, image_parameters, save_imgs=True):
             save_img(folder_path, "02_roi", roi_gray)
             save_img(folder_path, "03_roi_binarized", roi_bin)
 
-        
-        del enclosure_parser['n'] # delete the 'none' item, as it serves no purpose here
+        if 'n' in enclosure_parser:
+            del enclosure_parser['n'] # delete the 'none' item, as it serves no purpose here
         enclose_funcs = list(enclosure_parser.values())
 
         # loop through all enclosing functions
@@ -96,7 +98,7 @@ def get_image_info(img, image_parameters, save_imgs=True):
                     txt.write(info_str)
 
     else: # Region of Interest was not found
-        info_str = "ROI not found"
+        info_str = "NothingFound"
         print("Region of Interest not found.")
 
     return info_str
@@ -161,13 +163,11 @@ if __name__ == "__main__":
     config = ConfigReader()
 
     print("Starting Camera")
-    with img_proc.open_camera(config.param['camera_parameters']) as camera:
-        rawCapture = PiRGBArray(camera)
-        time.sleep(2) # wait for the camera to settle the gain control
-        print("Camera opened")
-
-        camera.capture(rawCapture, format='bgr')
-        image = rawCapture.array
+    cam = Camera(config.param['camera_parameters'], preview=True)
+    cam.open()
+    image = cam.capture_image()
 
     # Read and save all the image infos
     get_image_info(image, config.param['image_parameters'])
+
+    cam.close()
