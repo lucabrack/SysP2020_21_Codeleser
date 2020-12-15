@@ -28,9 +28,22 @@ def get_perimeter(contour, scale=1):
     perimeter = cv2.arcLength(contour, True)
     return perimeter / scale
 
-def get_orientation(contour):
+def get_point_count(contour, scale=1):
+    return len(contour)
+
+def get_orientation(contour, scale=1):
     if len(contour) > 4:
         _, _, angle = cv2.fitEllipse(contour)
         return angle
     else:
-        return 0
+        return 999
+
+
+# Dict of these functions for easy loop through
+feature_parser = {
+    'c'    : get_center,
+    'a'    : get_area,
+    'p'    : get_perimeter,
+    'l'    : get_point_count,
+    'o'    : get_orientation
+}
