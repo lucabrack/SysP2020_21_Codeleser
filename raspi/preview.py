@@ -14,7 +14,7 @@ import numpy as np
 from lib.enclosings import *
 import lib.image_processing as img_proc
 from lib.config_reader import ConfigReader
-
+from lib.cam import Camera
 
 ## Get all 4 Images for the live Preview, plus the focus image
 def get_preview(img, enclosure_func, image_parameters):   
@@ -88,52 +88,49 @@ def create_param_window(win_name):
 
 
 ## Start live preview
-def start_preview(config):
+if __name__ == "__main__":
     print("Starting Preview")
-    with img_proc.open_camera(config.param['camera_parameters'], preview=True) as camera:
-        rawCapture = PiRGBArray(camera)
-        enclosure = contour # default enclosure
-        create_param_window('Parameters')
+
+    config = ConfigReader()
+    cam = Camera(config.param['camera_parameters'], preview=True)
+    cam.open()
+    
+    enclosure = contour # default enclosure
+    create_param_window('Parameters')
         
-        for frame in camera.capture_continuous(rawCapture, format='bgr', use_video_port=True):
-            image = frame.array
-            # Get the 4 Images for the preview and the focus image
-            img, img_bin, roi, roi_bin, focus_img = get_preview(image, enclosure, config.param['image_parameters'])
+    for frame in cam.capture_continous():
+        image = frame.array
+        # Get the 4 Images for the preview and the focus image
+        img, img_bin, roi, roi_bin, focus_img = get_preview(image, enclosure, config.param['image_parameters'])
 
-            # concat the 4 images to one big one
-            result0 = cv2.hconcat([img, img_bin]) 
-            result1 = cv2.hconcat([roi, roi_bin])
-            result = cv2.vconcat([result0, result1])
-            result = cv2.resize(result, (int(config.param['display_parameters']['preview_width']),
-                                        int(config.param['display_parameters']['preview_height'])))
+        # concat the 4 images to one big one
+        result0 = cv2.hconcat([img, img_bin]) 
+        result1 = cv2.hconcat([roi, roi_bin])
+        result = cv2.vconcat([result0, result1])
+        result = cv2.resize(result, (int(config.param['display_parameters']['preview_width']),
+                                    int(config.param['display_parameters']['preview_height'])))
 
-            # display in separate window
-            cv2.imshow("Preview", result)
-            cv2.imshow('Parameters', focus_img)
-            key = cv2.waitKey(1) & 0xFF
-            rawCapture.truncate(0) #empty output for next Image
+        # display in separate window
+        cv2.imshow("Preview", result)
+        cv2.imshow('Parameters', focus_img)
+        key = cv2.waitKey(1) & 0xFF
+        cam.truncate_output()
 
-            # Break if 'q' key is pressed
-            if key == ord('q'):
-                break
+        # Break if 'q' key is pressed
+        if key == ord('q'):
+            break
 
-            # Save parameters if 's' key is pressed
-            elif key == ord('s'):
-                config.write_param()            
+        # Save parameters if 's' key is pressed
+        elif key == ord('s'):
+            config.write_param()            
 
-            # If a key from our enclosure list is pressed, change the
-            # enclosure method
-            elif chr(key) in enclosure_parser:
-                print(enclosure_parser[chr(key)].__name__)
-                enclosure = enclosure_parser[chr(key)]
+        # If a key from our enclosure list is pressed, change the
+        # enclosure method
+        elif chr(key) in enclosure_parser:
+            print(enclosure_parser[chr(key)].__name__)
+            enclosure = enclosure_parser[chr(key)]
 
 
     print("Terminating Program!")
+    cam.close()
     cv2.destroyAllWindows() # close all windows
-
-
-## Main method
-if __name__ == "__main__":
-    ## Read config file and start preview
-    config = ConfigReader()
-    start_preview(config)
