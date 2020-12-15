@@ -2,9 +2,7 @@
 import os
 import sys
 import re
-import argparse
 import time
-from configparser import ConfigParser
 import shutil
 from datetime import datetime
 
@@ -17,24 +15,14 @@ import numpy as np
 from lib.enclosings import *
 from lib.contour_features import *
 import lib.image_processing as img_proc
+from lib.config_reader import ConfigReader
 
 # Define root path to save the debugging images
 ROOT_SAVE_PATH = './raspi/lib/DEBUG_IMG/'
 
 
-## Read config file
-config = ConfigParser()
-if os.path.exists('config.ini'):
-    config_path = 'config.ini'    
-elif os.path.exists('./raspi/config.ini'):
-    config_path = './raspi/config.ini'
-else:
-    sys.exit('ERROR: No config file found!')
-config.read(config_path)
-
-
 ## Get all infos of every contour found
-def get_image_infos(img, image_parameters, save_imgs=True):
+def get_image_info(img, image_parameters, save_imgs=True):
     # All the infos get saved in one consecutive string
     info_str = ""
     
@@ -167,15 +155,19 @@ def build_info_str(info_str, value):
     return info_str
 
 
-# Start Camera
-print("Starting Camera")
-with img_proc.open_camera(config['camera_parameters']) as camera:
-    rawCapture = PiRGBArray(camera)
-    time.sleep(2) # wait for the camera to settle the gain control
-    print("Camera opened")
+## Main method
+if __name__ == "__main__":
+    # Read the config file
+    config = ConfigReader()
 
-    camera.capture(rawCapture, format='bgr')
-    image = rawCapture.array
+    print("Starting Camera")
+    with img_proc.open_camera(config.param['camera_parameters']) as camera:
+        rawCapture = PiRGBArray(camera)
+        time.sleep(2) # wait for the camera to settle the gain control
+        print("Camera opened")
 
-    # get the infos of the contours
-    info_str = get_image_infos(image, config['image_parameters'])
+        camera.capture(rawCapture, format='bgr')
+        image = rawCapture.array
+
+    # Read and save all the image infos
+    get_image_info(image, config.param['image_parameters'])
