@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Short and simple Bash Script to create shortcuts
+
+SOURCEDIR=/home/pi/Projekte/SysP2020_21_Codeleser/raspi/bash
+DESTDIR=/home/pi/Desktop
+
+# create the links
+ln -s $SOURCEDIR/launch-capture $DESTDIR/launch-capture
+ln -s $SOURCEDIR/launch-com $DESTDIR/launch-com
+ln -s $SOURCEDIR/launch-preview $DESTDIR/launch-preview
+ln -s $SOURCEDIR/update-code $DESTDIR/update-code
