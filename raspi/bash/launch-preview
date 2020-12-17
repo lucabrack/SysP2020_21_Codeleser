@@ -4,10 +4,18 @@
 
 echo "SysP2020-21 Codeleser"
 echo ""
+
+# Change to Project directory
 cd /home/pi/Projekte/SysP2020_21_Codeleser
+
+# Print out infos about the git commit
 echo -e "Working on:\n"
 git show -s --format=medium --abbrev-commit
 echo ""
+
+# Start the python script
 python3 raspi/preview.py
 
+
+# Keep the terminal after termination of the code -> for debugging
 exec $SHELL

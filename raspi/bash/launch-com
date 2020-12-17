@@ -5,10 +5,18 @@
 echo "SysP2020-21 Codeleser"
 echo "Launching serial communication"
 echo ""
+
+# Change to Project directory
 cd /home/pi/Projekte/SysP2020_21_Codeleser
+
+# Print out infos about the git commit
 echo -e "Working on:\n"
 git show -s --format=medium --abbrev-commit
 echo ""
+
+# Start the python script
 python3 raspi/serial_com.py
 
+
+# Keep the terminal after termination of the code -> for debugging
 exec $SHELL

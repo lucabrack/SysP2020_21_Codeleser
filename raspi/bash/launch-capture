@@ -6,10 +6,16 @@ echo "SysP2020-21 Codeleser"
 echo "Launching program to capture image"
 echo ""
 
-cd /home/pi/Projekte/SysP2020_21_Codeleser
+# Change to Project directory
+cd /home/pi/Projekte/SysP2020_21_Codeleser 
+
+# Print out infos about the git commit
 echo -e "Working on:\n"
 git show -s --format=medium --abbrev-commit
 echo ""
+
+# Start the python script
 python3 raspi/image_info.py
 
+# Keep the terminal after termination of the code -> for debugging
 exec $SHELL

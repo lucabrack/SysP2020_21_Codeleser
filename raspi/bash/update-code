@@ -6,18 +6,25 @@ echo "SysP2020-21 Codeleser"
 echo ""
 echo "Updating the code..."
 echo ""
+
+# Change to Project directory
 cd /home/pi/Projekte/SysP2020_21_Codeleser
+
+# get newest code from git and clean up local files
 sudo git fetch
 sudo git pull
-sudo git checkout .
-sudo git reset
-sudo git clean -f
-sudo git clean -fd
+sudo git checkout . 
+sudo git reset #kill all local commits
+sudo git clean -f #delete all untracked files
+sudo git clean -fd #delete all untracked directories
 
-sudo chmod -R a+rwx ./
+# make all files write- and executable
+sudo chmod -R a+rwx ./ 
 
+# Print out infos about the git commit
 echo ""
 echo -e "Working on:\n"
 git show -s --format=medium --abbrev-commit
 
+# Keep the terminal after termination of the code -> for debugging
 exec $SHELL
