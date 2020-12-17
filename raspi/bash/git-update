@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Short and simple Bash Script to update the code
+
+echo "SysP2020-21 Codeleser"
+echo ""
+echo "Updating the code..."
+echo ""
+cd /home/pi/Projekte/SysP2020_21_Codeleser
+sudo git update
+
+exec $SHELL

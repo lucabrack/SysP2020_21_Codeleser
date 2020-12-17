@@ -1,13 +1,14 @@
 #!/bin/bash
 
-# Short and simple Bash Script to start the preview
+# Short and simple Bash Script to start the serial communication
 
 echo "SysP2020-21 Codeleser"
+echo "Launching serial communication"
 echo ""
 cd /home/pi/Projekte/SysP2020_21_Codeleser
 echo -e "Working on:\n"
 git show -s --format=medium --abbrev-commit
 echo ""
-python3 raspi/preview.py
+python3 raspi/serial_com.py
 
 exec $SHELL
