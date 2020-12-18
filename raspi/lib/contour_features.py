@@ -16,8 +16,13 @@ def get_area_roi(roi_attr, full_img):
 
 def get_center(contour, roi):
     moments = cv2.moments(contour)
-    cx = moments['m10']/moments['m00']
-    cy = moments['m01']/moments['m00']
+    try:
+        cx = moments['m10']/moments['m00']
+        cy = moments['m01']/moments['m00']
+    except ZeroDivisionError:
+        cx = 999
+        cy = 999
+        
     return cx / roi.shape[1], cy / roi.shape[0]
 
 def get_area(contour, scale=1):
