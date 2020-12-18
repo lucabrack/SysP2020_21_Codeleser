@@ -82,12 +82,13 @@ def get_image_info(img, image_parameters, save_imgs=True):
                 cx, cy = get_center(enclosing, roi_gray)
                 area = get_area(enclosing, roi_area)
                 perimeter = get_perimeter(enclosing, roi_area)
-                orientation = get_orientation(enclosing)
+                #orientation = get_orientation(enclosing) #opted out from giving orientation
+                point_count = get_point_count(enclosing, None)
                 info_str = build_info_str(info_str, cx)
                 info_str = build_info_str(info_str, cy)
                 info_str = build_info_str(info_str, area)
                 info_str = build_info_str(info_str, perimeter)
-                info_str = build_info_str(info_str, orientation)
+                info_str = build_info_str(info_str, point_count)
 
             # save images and info string for debugging purposes
             if save_imgs:
@@ -163,7 +164,7 @@ if __name__ == "__main__":
     config = ConfigReader()
 
     print("Starting Camera")
-    cam = Camera(config.param['camera_parameters'], preview=True)
+    cam = Camera(config.param['camera_parameters'])
     cam.open()
     image = cam.capture_image()
 
