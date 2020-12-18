@@ -19,6 +19,7 @@ serial_led = LED(int(config.param['hardware_parameters']['serial_led_pin']))
 main_led.on()
 
 # Open camera
+sleep(5)
 cam = Camera(config.param['camera_parameters'])
 cam.open()
 cam_led.on()
