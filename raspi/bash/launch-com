@@ -14,8 +14,11 @@ echo -e "Working on:\n"
 git show -s --format=medium --abbrev-commit
 echo ""
 
+# Waiting for camera
+sleep 3
+
 # Start the python script
-python3 raspi/serial_com.py
+/bin/python3 raspi/serial_com.py
 
 
 # Keep the terminal after termination of the code -> for debugging
