@@ -72,6 +72,10 @@ while True:
         else:
             flash.on()
 
+    # Break the loop and terminate the program
+    elif data_str == 'exit':
+        break
+
 # Close the open interfaces
 cam.close()
 ser.close()
