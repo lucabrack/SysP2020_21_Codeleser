@@ -123,4 +123,4 @@ def draw_rectangle(img, rec_attr):
 # Measure the focus from a grayscale image
 def measure_focus(roi_gray):
     focus = cv2.Laplacian(roi_gray, cv2.CV_64F).var()
-    return focus * roi_gray.shape[1] # scale the focus with image width to not make it dependent on image size
+    return focus 
