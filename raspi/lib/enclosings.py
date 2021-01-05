@@ -12,7 +12,7 @@ def contour(contours):
 
 # Ellipse Approximation
 def approximation(contours):
-    epsilon = 0.1*cv2.arcLength(contours,True)
+    epsilon = 0.05*cv2.arcLength(contours,True)
     approx = cv2.approxPolyDP(contours,epsilon,True)
     return approx
 
