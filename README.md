@@ -1,8 +1,8 @@
 # SysP2020_21_Codeleser
 Eine Sammlung von Programmen für die Bildverarbeitungskomponente des Systemtechnikprojekts 2020/2021 der Ostschweizer Fachhochschule OST.
 Die dazu benötigte Hardware ist:
-*Raspberry Pi (Zero W und 3B+ wurden getestet)
-*Raspberry Pi Camera (V2.1 getestet)
+* Raspberry Pi (Zero W und 3B+ wurden getestet)
+* Raspberry Pi Camera (V2.1 getestet)
 
 ## Installation (nur bei neu aufgesetztem Raspi nötig)
 Klone das Repository in den /home/pi/Projekte Ordner:
