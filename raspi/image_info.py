@@ -45,7 +45,7 @@ def get_image_info(img, image_parameters, save_imgs=True):
     if roi_attr is not None:
         # Get Centre and Area of Region of Interest, write them to the info string
         roi_x, roi_y = get_center_roi(roi_attr, img)
-        roi_area, roi_area_scaled = get_area_roi(roi_attr, img)
+        roi_area_scaled = get_area_roi(roi_attr, img)
         info_str = build_info_str(info_str, roi_x)
         info_str = build_info_str(info_str, roi_y)
         info_str = build_info_str(info_str, roi_area_scaled)
@@ -80,10 +80,10 @@ def get_image_info(img, image_parameters, save_imgs=True):
 
                 # calculate the different features, write them to the info string
                 cx, cy = get_center(enclosing, roi_gray)
-                area = get_area(enclosing, roi_area)
-                perimeter = get_perimeter(enclosing, roi_area)
-                #orientation = get_orientation(enclosing) #opted out from giving orientation
+                area = get_area(enclosing, roi_gray)
+                perimeter = get_perimeter(enclosing, roi_gray)
                 point_count = get_point_count(enclosing, None)
+                
                 info_str = build_info_str(info_str, cx)
                 info_str = build_info_str(info_str, cy)
                 info_str = build_info_str(info_str, area)

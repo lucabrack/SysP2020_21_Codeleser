@@ -12,9 +12,9 @@ def get_area_roi(roi_attr, full_img):
     x,y,w,h = roi_attr
     area = w*h
     area_scaled = area / (full_img.shape[0] * full_img.shape[1])
-    return area, area_scaled
+    return area_scaled
 
-def get_center(contour, roi):
+def get_center(contour, roi_img):
     moments = cv2.moments(contour)
     try:
         cx = moments['m10']/moments['m00']
@@ -23,20 +23,22 @@ def get_center(contour, roi):
         cx = 999
         cy = 999
         
-    return cx / roi.shape[1], cy / roi.shape[0]
+    return cx / roi_img.shape[1], cy / roi_img.shape[0]
 
-def get_area(contour, scale=1):
+def get_area(contour, roi_img):
     area = cv2.contourArea(contour)
-    return area / scale
+    roi_area = (roi_img.shape[0] * roi_img.shape[1])
+    return area / roi_area 
 
-def get_perimeter(contour, scale=1):
+def get_perimeter(contour, roi_img):
     perimeter = cv2.arcLength(contour, True)
-    return perimeter / scale
+    roi_perimeter = roi_img.shape[0]*2 + roi_img.shape[1]*2
+    return perimeter / roi_perimeter
 
-def get_point_count(contour, scale=1):
+def get_point_count(contour, roi_img):
     return len(contour)
 
-def get_orientation(contour, scale=1):
+def get_orientation(contour, roi_img):
     if len(contour) > 4:
         _, _, angle = cv2.fitEllipse(contour)
         return angle
