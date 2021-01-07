@@ -56,6 +56,7 @@ while True:
     # Send 'pong' if someone pings
     if data_str == 'ping':
         ser.write("pong".encode())
+        ser.write(b'\r\n')
 
     # Take image, process it and send the info string
     elif data_str == 'shoot':
@@ -64,6 +65,7 @@ while True:
         info_str = get_image_info(image, config.param['image_parameters'])
         cam_led.on()
         ser.write(info_str.encode())
+        ser.write(b'\r\n')
 
     # Turn Flash on and off
     elif data_str == 'flash':
