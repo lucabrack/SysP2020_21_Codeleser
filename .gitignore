@@ -4,3 +4,5 @@
 *.pyc
 *.pylintrc
 raspi/debug/
+tmp_imgs
+00_image.png
