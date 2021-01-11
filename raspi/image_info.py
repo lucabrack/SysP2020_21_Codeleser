@@ -8,22 +8,16 @@ from datetime import datetime
 
 # import image processing libraries
 import cv2
-from picamera.array import PiRGBArray
 import numpy as np
 
 # import project libraries
 from lib.enclosings import *
 from lib.contour_features import *
 import lib.image_processing as img_proc
-from lib.config_reader import ConfigReader
-from lib.cam import Camera
-
-# Define root path to save the debugging images
-ROOT_SAVE_PATH = './raspi/debug/'
 
 
 ## Get all infos of every contour found
-def get_image_info(img, image_parameters, save_imgs=True):
+def get_image_info(img, image_parameters, save_imgs=True, debug_folder_path='./raspi/debug/'):
     # All the infos get saved in one consecutive string
     info_str = ""
     
@@ -34,7 +28,7 @@ def get_image_info(img, image_parameters, save_imgs=True):
 
     # save the images for debugging purposes
     if save_imgs:
-        folder_path = create_img_folder(ROOT_SAVE_PATH)
+        folder_path = create_img_folder(debug_folder_path)
         save_img(folder_path, "00_img", img)
         img_bin_bgr = img_proc.bgr(img_bin.copy())
         if roi_attr is not None:
@@ -95,8 +89,7 @@ def get_image_info(img, image_parameters, save_imgs=True):
                 roi_copy = img_proc.bgr(roi_gray.copy())
                 img_proc.draw_contours(roi_copy, enc)
                 save_img(folder_path, f'{i+4:02d}_roi_' + enclose_func.__name__, roi_copy)
-                with open(os.path.join(folder_path, "image_infos.txt"), 'w') as txt:
-                    txt.write(info_str)
+                save_info_str(folder_path, info_str)
 
     else: # Region of Interest was not found
         info_str = "NothingFound"
@@ -155,11 +148,24 @@ def build_info_str(info_str, value):
         info_str += value
     else:
         print('Unhandled instance for info string: ' + str(type(value)))
+
     return info_str
+
+
+## Save the info string
+def save_info_str(folder_path, info_str):
+    # if the folder path doesn't exist, nothing gets saved
+    if folder_path is not None:
+        with open(os.path.join(folder_path, "image_infos.txt"), 'w') as txt:
+            txt.write(info_str)
 
 
 ## Main method
 if __name__ == "__main__":
+    from picamera.array import PiRGBArray
+    from lib.cam import Camera
+    from lib.config_reader import ConfigReader
+
     # Read the config file
     config = ConfigReader()
 
