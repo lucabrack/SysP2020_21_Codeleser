@@ -11,6 +11,7 @@ echo ""
 cd /home/pi/Projekte/SysP2020_21_Codeleser
 
 # get newest code from git and clean up local files
+sudo git checkout main
 sudo git fetch
 sudo git pull
 sudo git checkout . 
