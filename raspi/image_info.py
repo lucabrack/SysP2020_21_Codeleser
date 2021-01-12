@@ -17,7 +17,7 @@ import lib.image_processing as img_proc
 
 
 ## Get all infos of every contour found
-def get_image_info(img, image_parameters, save_imgs=True, debug_folder_path='./raspi/debug/'):
+def get_image_info(img, image_parameters, save_imgs=True, debug_folder_path='./raspi/debug/', max_saves=10):
     # All the infos get saved in one consecutive string
     info_str = ""
     
@@ -28,7 +28,7 @@ def get_image_info(img, image_parameters, save_imgs=True, debug_folder_path='./r
 
     # save the images for debugging purposes
     if save_imgs:
-        folder_path = create_img_folder(debug_folder_path)
+        folder_path = create_img_folder(debug_folder_path, max_saves=max_saves)
         save_img(folder_path, "00_img", img)
         img_bin_bgr = img_proc.bgr(img_bin.copy())
         if roi_attr is not None:
@@ -158,6 +158,9 @@ def save_info_str(folder_path, info_str):
     if folder_path is not None:
         with open(os.path.join(folder_path, "image_infos.txt"), 'w') as txt:
             txt.write(info_str)
+    else:
+        print("Info String could not be saved.")
+        print("Folder Path " + str(folder_path) + " does not exist.")
 
 
 ## Main method
