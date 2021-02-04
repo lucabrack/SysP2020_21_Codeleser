@@ -31,7 +31,7 @@ def get_image_info(img, image_parameters, save_imgs=True, debug_folder_path='./r
     # save the images for debugging purposes
     if save_imgs:
         folder_path = create_img_folder(debug_folder_path, max_saves=max_saves)
-        save_img(folder_path, "00_img", img)
+        save_img(folder_path, "00_img", cv2.resize(img,(412,308)))
         img_bin_bgr = img_proc.bgr(img_bin.copy())
         if roi_attr is not None:
             img_proc.draw_rectangle(img_bin_bgr, roi_attr)
@@ -180,6 +180,6 @@ if __name__ == "__main__":
     image = cam.capture_image()
 
     # Read and save all the image infos
-    get_image_info(image, config.param['image_parameters'], save_imgs=False)
+    get_image_info(image, config.param['image_parameters'])
 
     cam.close()

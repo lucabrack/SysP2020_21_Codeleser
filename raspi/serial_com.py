@@ -62,6 +62,15 @@ while True:
     elif data_str == 'shoot':
         cam_led.blink(0.3,0.3)
         image = cam.capture_image()
+        info_str = get_image_info(image, config.param['image_parameters'], save_imgs=False)
+        cam_led.on()
+        ser.write(info_str.encode())
+        ser.write(b'\r\n')
+
+    # Take image, process it and send the info string
+    elif data_str == 'save':
+        cam_led.blink(0.3,0.3)
+        image = cam.capture_image()
         info_str = get_image_info(image, config.param['image_parameters'])
         cam_led.on()
         ser.write(info_str.encode())
