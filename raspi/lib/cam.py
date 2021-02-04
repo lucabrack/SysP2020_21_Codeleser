@@ -18,7 +18,7 @@ class Camera:
     def open(self):
         self.camera = PiCamera(resolution=self.resolution, framerate=self.framerate)
         self.rawCapture = PiRGBArray(self.camera)
-        time.sleep(2)
+        time.sleep(5)
         print("Camera opened")
     
     def close(self):
