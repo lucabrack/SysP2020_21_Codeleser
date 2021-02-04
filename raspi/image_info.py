@@ -23,8 +23,10 @@ def get_image_info(img, image_parameters, save_imgs=True, debug_folder_path='./r
     
     img_gray = img_proc.grayscale(img)
     
+    img_gray_resized = cv2.resize(img_gray,(412,308))
+    
     # Search for Region of Interest
-    roi_attr, img_bin = img_proc.get_roi_attr(img_gray, image_parameters)
+    roi_attr, img_bin = img_proc.get_roi_attr(img_gray_resized, image_parameters)
 
     # save the images for debugging purposes
     if save_imgs:
@@ -38,14 +40,14 @@ def get_image_info(img, image_parameters, save_imgs=True, debug_folder_path='./r
     # Check if the Region of Interest was found
     if roi_attr is not None:
         # Get Centre and Area of Region of Interest, write them to the info string
-        roi_x, roi_y = get_center_roi(roi_attr, img)
-        roi_area_scaled = get_area_roi(roi_attr, img)
+        roi_x, roi_y = get_center_roi(roi_attr, img_gray_resized)
+        roi_area_scaled = get_area_roi(roi_attr, img_gray_resized)
         info_str = build_info_str(info_str, roi_x)
         info_str = build_info_str(info_str, roi_y)
         info_str = build_info_str(info_str, roi_area_scaled)
         
         # Make ROI gray and search for contours
-        roi_gray = img_proc.get_roi(img_gray, roi_attr)    
+        roi_gray = img_proc.get_roi(img_gray, tuple([x*8 for x in roi_attr]))    
         contours, roi_bin = img_proc.get_roi_contours(roi_gray, image_parameters)
 
         # Measure focus of ROI, get number of contours found, write them to info string 
@@ -178,6 +180,6 @@ if __name__ == "__main__":
     image = cam.capture_image()
 
     # Read and save all the image infos
-    get_image_info(image, config.param['image_parameters'])
+    get_image_info(image, config.param['image_parameters'], save_imgs=False)
 
     cam.close()
