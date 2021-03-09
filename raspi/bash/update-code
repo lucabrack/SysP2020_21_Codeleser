@@ -12,7 +12,7 @@ cd /home/pi/Projekte/SysP2020_21_Codeleser
 
 # get newest code from git and clean up local files
 sudo git checkout . 
-sudo git reset #kill all local commits
+sudo git reset --hard #kill all local commits
 sudo git clean -f #delete all untracked files
 sudo git clean -fd #delete all untracked directories
 sudo git checkout main
