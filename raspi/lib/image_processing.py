@@ -45,7 +45,9 @@ def get_roi_attr(img_gray, image_parameters):
     THRESH_CONST_FULL = int(image_parameters['thresh_const_full'])
 
     # blur the image to filter out unwanted noise
-    blur = cv2.medianBlur(img_gray,BLUR_FULL)
+    # blur is deactivated for now (it's too computationally intensive)
+    #blur = cv2.medianBlur(img_gray,BLUR_FULL)
+    blur = img_gray
 
     # Adaptive thresholding to get a black and white image
     thresh = cv2.adaptiveThreshold(blur,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
@@ -89,7 +91,10 @@ def get_roi_contours(roi_gray, image_parameters):
     THRESH_CONST_ROI = int(image_parameters['thresh_const_roi'])
 
     # blur the image to filter out unwanted noise
-    roi_blur = cv2.medianBlur(roi_gray,BLUR_ROI)
+    # blur is deactivated for now (it's too computationally intensive)
+    #roi_blur = cv2.medianBlur(roi_gray,BLUR_ROI)
+    roi_blur = roi_gray
+
     # Adaptive thresholding to get a black and white image
     roi_thresh = cv2.adaptiveThreshold(roi_blur,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
             cv2.THRESH_BINARY_INV,THRESH_BLOCK_ROI,THRESH_CONST_ROI)
