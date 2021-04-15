@@ -6,6 +6,7 @@ import math
 from lib.enclosings import *
 from lib.contour_features import *
 
+#clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(4,4))
 
 # Convert image to grayscale
 def grayscale(img):
@@ -87,7 +88,7 @@ def get_roi(img, roi_attr):
 def get_roi_contours(roi_gray, image_parameters):
     # Define all parameters from config file
     BLUR_ROI = scale_blur(roi_gray, image_parameters['blur_roi'])
-    THRESH_BLOCK_ROI = scale_block(roi_gray, image_parameters['thresh_block_roi'])
+    THRESH_BLOCK_ROI = scale_block(roi_gray, 3*image_parameters['thresh_block_roi'])
     THRESH_CONST_ROI = int(image_parameters['thresh_const_roi'])
 
     # blur the image to filter out unwanted noise
@@ -95,8 +96,15 @@ def get_roi_contours(roi_gray, image_parameters):
     #roi_blur = cv2.medianBlur(roi_gray,BLUR_ROI)
     roi_blur = roi_gray
 
+    # TEST: use adaptive histogram matching to better the contrast on the image
+    #roi_clahe = clahe.apply(roi_blur)
+
+    # sharpen image
+    blur = cv2.GaussianBlur(roi_blur, (0,0), 3)
+    roi_sharpen = cv2.addWeighted(roi_blur, 1.5, blur, -0.5, 0)
+
     # Adaptive thresholding to get a black and white image
-    roi_thresh = cv2.adaptiveThreshold(roi_blur,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+    roi_thresh = cv2.adaptiveThreshold(roi_sharpen,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
             cv2.THRESH_BINARY_INV,THRESH_BLOCK_ROI,THRESH_CONST_ROI)
     # find the contours on the zoom image
     cont_roi, _ = cv2.findContours(roi_thresh, 1, 2)
