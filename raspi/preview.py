@@ -79,12 +79,12 @@ def change_image_param(val, tb_name):
 ## Create a second window with all the trackbars
 def create_param_window(win_name):
     cv2.namedWindow(win_name)
-    cv2.createTrackbar('blur_full', win_name, int(config.param['image_parameters']['blur_full']), 100, lambda x: change_image_param(x, 'blur_full'))
-    cv2.createTrackbar('block_full', win_name, int(config.param['image_parameters']['thresh_block_full']), 100, lambda x: change_image_param(x, 'thresh_block_full'))
-    cv2.createTrackbar('const_full', win_name, int(config.param['image_parameters']['thresh_const_full']), 100, lambda x: change_image_param(x, 'thresh_const_full'))
-    cv2.createTrackbar('blur_roi', win_name, int(config.param['image_parameters']['blur_roi']), 100, lambda x: change_image_param(x, 'blur_roi'))
-    cv2.createTrackbar('block_roi', win_name, int(config.param['image_parameters']['thresh_block_roi']), 100, lambda x: change_image_param(x, 'thresh_block_roi'))
-    cv2.createTrackbar('const_roi', win_name, int(config.param['image_parameters']['thresh_const_roi']), 100, lambda x: change_image_param(x, 'thresh_const_roi'))
+    #cv2.createTrackbar('blur_full', win_name, int(config.param['image_parameters']['blur_full']), 100, lambda x: change_image_param(x, 'blur_full'))
+    #cv2.createTrackbar('block_full', win_name, int(config.param['image_parameters']['thresh_block_full']), 100, lambda x: change_image_param(x, 'thresh_block_full'))
+    #cv2.createTrackbar('const_full', win_name, int(config.param['image_parameters']['thresh_const_full']), 100, lambda x: change_image_param(x, 'thresh_const_full'))
+    #cv2.createTrackbar('blur_roi', win_name, int(config.param['image_parameters']['blur_roi']), 100, lambda x: change_image_param(x, 'blur_roi'))
+    #cv2.createTrackbar('block_roi', win_name, int(config.param['image_parameters']['thresh_block_roi']), 100, lambda x: change_image_param(x, 'thresh_block_roi'))
+    #cv2.createTrackbar('const_roi', win_name, int(config.param['image_parameters']['thresh_const_roi']), 100, lambda x: change_image_param(x, 'thresh_const_roi'))
 
 
 ## Start live preview
