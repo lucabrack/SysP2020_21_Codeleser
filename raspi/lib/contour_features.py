@@ -12,7 +12,7 @@ def get_area_roi(roi_attr, full_img):
     x,y,w,h = roi_attr
     area = w*h
     area_scaled = area / (full_img.shape[0] * full_img.shape[1])
-    return int(area_scaled) * 255
+    return int(area_scaled * 255)
 
 def get_center(contour, roi_img):
     moments = cv2.moments(contour)
