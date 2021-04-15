@@ -62,7 +62,6 @@ def get_image_info(img, image_parameters, save_imgs=True, debug_folder_path='./r
         info_list.append(len(shapes))
         for shape in shapes:
             info_list.append(shape[0])
-            print(shape[0])
             info_list.append(shape[1][0])
             info_list.append(shape[1][1])
 
