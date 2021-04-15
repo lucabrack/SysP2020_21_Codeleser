@@ -78,7 +78,7 @@ def get_roi(img, roi_attr):
     # cut the roi out of the image
     # use only 90% of the image to leave out the border
     x,y,w,h = roi_attr
-    offset_ratio = 0.075
+    offset_ratio = 0.1
     offset_x= int(offset_ratio*w)
     offset_y= int(offset_ratio*h)
     return img.copy()[y+offset_y:y+h-offset_y,x+offset_x:x+w-offset_x]
@@ -113,6 +113,49 @@ def get_roi_contours(roi_gray, image_parameters):
                 cont.append(c)
     
     return cont, roi_thresh
+
+
+def get_shapes(contours, roi):
+    shapes = []
+
+    enclosing_circles = [ circle(x) for x in contours ]
+    circle_areas = [ get_area(x, roi) for x in enclosing_circles]
+    circle_median_area = np.median(circle_areas)
+
+    def in_range(input_value, base_value, percent):
+        return (1-percent)*base_value <= input_value <= (1+percent)*base_value
+
+    circle_area_range = 0.75
+    shape_area_range = 0.20
+    for contour, circle_area in zip(contours, circle_areas):
+        # Check if the contour is roughly the right size
+        if in_range(circle_area, circle_median_area, circle_area_range):
+            # Check if the shape is a circle
+            contour_area = get_area(contour, roi)
+            if in_range(contour_area/circle_area, 1, shape_area_range):
+                shapes.append([0, get_center(contour, roi)])
+            
+            else: # not a circle
+                # Check if the shape is a rectangle
+                enclosing_rectangle = rectangle(contour)
+                rectangle_area = get_area(enclosing_rectangle, roi)
+                if in_range(contour_area/rectangle_area, 1, shape_area_range):
+                    shapes.append([2, get_center(contour, roi)])
+                
+                else: # not a rectangle
+                    # Check if the shape is a triangle
+                    enclosing_hull = hull(contour)
+                    hull_area = get_area(enclosing_hull, roi)
+                    if in_range(contour_area/hull_area, 1, shape_area_range):
+                        shapes.append([1, get_center(contour, roi)])
+                    
+                    else: # not a triangle
+                        # so it must be a cross
+                        shapes.append([3, get_center(contour, roi)])
+    
+    return shapes
+
+            
 
 # Draw all the contours given in a list
 def draw_contours(img, contours):
