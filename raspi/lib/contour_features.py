@@ -6,24 +6,26 @@ def get_center_roi(roi_attr, full_img):
     x,y,w,h = roi_attr
     cx = x + w/2
     cy = y + h/2
-    return cx / full_img.shape[1], cy / full_img.shape[0]
+    return int(cx / full_img.shape[1] * 255), int(cy / full_img.shape[0] * 255)
 
 def get_area_roi(roi_attr, full_img):
     x,y,w,h = roi_attr
     area = w*h
     area_scaled = area / (full_img.shape[0] * full_img.shape[1])
-    return area_scaled
+    return int(area_scaled) * 255
 
 def get_center(contour, roi_img):
     moments = cv2.moments(contour)
     try:
         cx = moments['m10']/moments['m00']
         cy = moments['m01']/moments['m00']
+        return int(cx / roi_img.shape[1] * 255), int(cy / roi_img.shape[0] * 255)
+    
     except ZeroDivisionError:
         cx = 999
         cy = 999
-        
-    return cx / roi_img.shape[1], cy / roi_img.shape[0]
+        return cx, cy
+    
 
 def get_area(contour, roi_img):
     area = cv2.contourArea(contour)
