@@ -46,42 +46,43 @@ def get_image_info(img, image_parameters, save_imgs=True, debug_folder_path='./r
         info_list.append(roi_y)
         info_list.append(roi_area_scaled)
         
-        # Make ROI gray and search for contours
-        roi_gray = img_proc.get_roi(img_gray, tuple([x*8 for x in roi_attr]))    
-        contours, roi_bin = img_proc.get_roi_contours(roi_gray, image_parameters)
+        if 5 <= roi_area_scaled <= 13: #Check if the ROI is a probable size
+            # Make ROI gray and search for contours
+            roi_gray = img_proc.get_roi(img_gray, tuple([x*8 for x in roi_attr]))    
+            contours, roi_bin = img_proc.get_roi_contours(roi_gray, image_parameters)
 
-        # Measure focus of ROI write it to info string 
-        info_list.append(int(img_proc.measure_focus(roi_gray)))
+            # Measure focus of ROI write it to info string 
+            info_list.append(int(img_proc.measure_focus(roi_gray)))
 
-        # Save images for debugging purposes
-        if save_imgs:
-            save_img(folder_path, "02_roi", roi_gray)
-            save_img(folder_path, "03_roi_binarized", roi_bin)
+            # Save images for debugging purposes
+            if save_imgs:
+                save_img(folder_path, "02_roi", roi_gray)
+                save_img(folder_path, "03_roi_binarized", roi_bin)
 
-        shapes = img_proc.get_shapes(contours, roi_gray)
-        info_list.append(len(shapes))
-        for shape in shapes:
-            info_list.append(shape[0])
-            info_list.append(shape[1][0])
-            info_list.append(shape[1][1])
+            shapes = img_proc.get_shapes(contours, roi_gray)
+            info_list.append(len(shapes))
+            for shape in shapes:
+                info_list.append(shape[0])
+                info_list.append(shape[1][0])
+                info_list.append(shape[1][1])
 
-        # save images and info string for debugging purposes
-        if save_imgs:
-            roi_copy = img_proc.bgr(roi_gray.copy())
-            img_proc.draw_contours(roi_copy, contours)
-            save_img(folder_path, '04_contour', roi_copy)
-            '''
-            roi_copy = img_proc.bgr(roi_gray.copy())
-            img_proc.draw_contours(roi_copy, circle(contours))
-            save_img(folder_path, '05_circle', roi_copy)
-            roi_copy = img_proc.bgr(roi_gray.copy())
-            img_proc.draw_contours(roi_copy, box(contours))
-            save_img(folder_path, '05_rectangle', roi_copy)
-            roi_copy = img_proc.bgr(roi_gray.copy())
-            img_proc.draw_contours(roi_copy, hull(contours))
-            save_img(folder_path, '05_hull', roi_copy)
-            '''
-            save_info_list(folder_path, info_list)
+            # save images and info string for debugging purposes
+            if save_imgs:
+                roi_copy = img_proc.bgr(roi_gray.copy())
+                img_proc.draw_contours(roi_copy, contours)
+                save_img(folder_path, '04_contour', roi_copy)
+                '''
+                roi_copy = img_proc.bgr(roi_gray.copy())
+                img_proc.draw_contours(roi_copy, circle(contours))
+                save_img(folder_path, '05_circle', roi_copy)
+                roi_copy = img_proc.bgr(roi_gray.copy())
+                img_proc.draw_contours(roi_copy, box(contours))
+                save_img(folder_path, '05_rectangle', roi_copy)
+                roi_copy = img_proc.bgr(roi_gray.copy())
+                img_proc.draw_contours(roi_copy, hull(contours))
+                save_img(folder_path, '05_hull', roi_copy)
+                '''
+                
 
     else: # Region of Interest was not found
         info_list.append(4)
@@ -89,6 +90,7 @@ def get_image_info(img, image_parameters, save_imgs=True, debug_folder_path='./r
         info_list.append(4)
         print("Region of Interest not found.")
 
+    save_info_list(folder_path, info_list)
     return info_list
 
 
@@ -151,8 +153,10 @@ if __name__ == "__main__":
     cam = Camera(config.param['camera_parameters'])
     cam.open()
     image = cam.capture_image()
+    print("Image captured")
 
     # Read and save all the image infos
     get_image_info(image, config.param['image_parameters'])
+    print("Done")
 
     cam.close()
