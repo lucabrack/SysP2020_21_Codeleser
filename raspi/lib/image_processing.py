@@ -18,7 +18,7 @@ def bgr(img):
 
 # Scale the thresholding block with the size of the Image
 def scale_block(img, param):
-    val = int(param) / 5 # reduce to 20% of the image size
+    val = int(param)
     val_pix = int(img.shape[1] * val / 100)
     if val_pix <= 1:
         return 3
@@ -88,7 +88,7 @@ def get_roi(img, roi_attr):
 def get_roi_contours(roi_gray, image_parameters):
     # Define all parameters from config file
     BLUR_ROI = scale_blur(roi_gray, image_parameters['blur_roi'])
-    THRESH_BLOCK_ROI = scale_block(roi_gray, 3*image_parameters['thresh_block_roi'])
+    THRESH_BLOCK_ROI = scale_block(roi_gray, image_parameters['thresh_block_roi'])
     THRESH_CONST_ROI = int(image_parameters['thresh_const_roi'])
 
     # blur the image to filter out unwanted noise
@@ -127,17 +127,16 @@ def get_shapes(contours, roi):
     shapes = []
 
     enclosing_circles = [ circle(x) for x in contours ]
-    circle_areas = [ get_area(x, roi) for x in enclosing_circles]
+    circle_areas = [ get_area(x, roi) for x in enclosing_circles ]
     circle_median_area = np.median(circle_areas)
 
     def in_range(input_value, base_value, percent):
         return (1-percent)*base_value <= input_value <= (1+percent)*base_value
 
-    circle_area_range = 0.75
     shape_area_range = 0.20
     for contour, circle_area in zip(contours, circle_areas):
         # Check if the contour is roughly the right size
-        if in_range(circle_area, circle_median_area, circle_area_range):
+        if circle_median_area * 0.5 <= circle_area <= circle_median_area * 3:
             # Check if the shape is a circle
             contour_area = get_area(contour, roi)
             if in_range(contour_area/circle_area, 1, shape_area_range):
