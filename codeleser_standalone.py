@@ -86,8 +86,8 @@ class GUI(tk.Frame):
                 
 
     
-
-root = tk.Tk()
-root.title("Image Processing Standalone")
-gui = GUI(master=root)
-gui.mainloop()   
+if __name__ == '__main__':
+    root = tk.Tk()
+    root.title("Image Processing Standalone")
+    gui = GUI(master=root)
+    gui.mainloop()   
