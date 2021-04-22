@@ -1,4 +1,5 @@
 import serial
+import struct
 from time import sleep
 from gpiozero import LED
 from image_info import get_image_info
@@ -34,6 +35,12 @@ ser.reset_output_buffer()
 print("Serial openend")
 serial_led.on()
 
+def send_int_list(int_list):
+    print(int_list)
+    for i in int_list:
+        b = struct.pack('B', i)
+        ser.write(b)
+    ser.write(b'\n')
 
 # Endless loop listening for messages
 while True:
@@ -46,7 +53,6 @@ while True:
         if recv_byte == b'\r':
             break
         recv_data += recv_byte
-        sleep(0.03)
     print("Message recieved!") 
 
     # Decode the bytes to string with UTF-8
@@ -56,25 +62,23 @@ while True:
     # Send 'pong' if someone pings
     if data_str == 'ping':
         ser.write("pong".encode())
-        ser.write(b'\r\n')
+        ser.write(b'\n')
 
     # Take image, process it and send the info string
     elif data_str == 'shoot':
         cam_led.blink(0.3,0.3)
         image = cam.capture_image()
-        info_str = get_image_info(image, config.param['image_parameters'], save_imgs=False)
+        info_list = get_image_info(image, config.param['image_parameters'], save_imgs=False)
         cam_led.on()
-        ser.write(info_str.encode())
-        ser.write(b'\r\n')
+        send_int_list(info_list)
 
     # Take image, process it and send the info string
     elif data_str == 'save':
         cam_led.blink(0.3,0.3)
         image = cam.capture_image()
-        info_str = get_image_info(image, config.param['image_parameters'])
+        info_list = get_image_info(image, config.param['image_parameters'], save_imgs=True)
         cam_led.on()
-        ser.write(info_str.encode())
-        ser.write(b'\r\n')
+        send_int_list(info_list)
 
     # Turn Flash on and off
     elif data_str == 'flash':
@@ -86,6 +90,11 @@ while True:
     # Break the loop and terminate the program
     elif data_str == 'exit':
         break
+
+    # Send N/A if command is not known
+    else:
+        ser.write("n/a".encode())
+        ser.write(b'\n')
 
 # Close the open interfaces
 cam.close()

@@ -29,8 +29,8 @@ def get_image_info(img, image_parameters, save_imgs=True, debug_folder_path='./r
     roi_attr, img_bin = img_proc.get_roi_attr(img_gray_resized, image_parameters)
 
     # save the images for debugging purposes
+    folder_path = create_img_folder(debug_folder_path, max_saves=max_saves)
     if save_imgs:
-        folder_path = create_img_folder(debug_folder_path, max_saves=max_saves)
         save_img(folder_path, "00_img", cv2.resize(img,(412,308)))
         img_bin_bgr = img_proc.bgr(img_bin.copy())
         if roi_attr is not None:
