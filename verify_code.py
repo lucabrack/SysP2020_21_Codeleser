@@ -19,7 +19,7 @@ USER = 'pi'
 PW = '1234'
 
 IMG_SIZE = 500
-SHAPE_SIZE = 20
+SHAPE_SIZE = 15
 
 class GUI(tk.Frame):
     def __init__(self, master=None):
