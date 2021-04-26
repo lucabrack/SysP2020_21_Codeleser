@@ -22,8 +22,11 @@ def get_image_info(img, image_parameters, save_imgs=True, debug_folder_path='./r
     info_list = []
     
     img_gray = img_proc.grayscale(img)
-    
-    img_gray_resized = cv2.resize(img_gray,(412,308))
+
+    resize_width = int(image_parameters['resize_width'])
+    resize_height = int(image_parameters['resize_height'])
+    resize_scale = img.shape[1]//resize_width
+    img_gray_resized = cv2.resize(img_gray,(resize_width,resize_height))
     
     # Search for Region of Interest
     roi_attr, img_bin = img_proc.get_roi_attr(img_gray_resized, image_parameters)
@@ -31,7 +34,7 @@ def get_image_info(img, image_parameters, save_imgs=True, debug_folder_path='./r
     # save the images for debugging purposes
     folder_path = create_img_folder(debug_folder_path, max_saves=max_saves)
     if save_imgs:
-        save_img(folder_path, "00_img", cv2.resize(img,(412,308)))
+        save_img(folder_path, "00_img", cv2.resize(img,(resize_width,resize_height)))
         img_bin_bgr = img_proc.bgr(img_bin.copy())
         if roi_attr is not None:
             img_proc.draw_rectangle(img_bin_bgr, roi_attr)
@@ -46,9 +49,9 @@ def get_image_info(img, image_parameters, save_imgs=True, debug_folder_path='./r
         info_list.append(roi_y)
         info_list.append(roi_area_scaled)
         
-        if 5 <= roi_area_scaled <= 13: #Check if the ROI is a probable size
+        if 5 <= roi_area_scaled <= 13: #Check if the ROI is roughly the right size
             # Make ROI gray and search for contours
-            roi_gray = img_proc.get_roi(img_gray, tuple([x*8 for x in roi_attr]))    
+            roi_gray = img_proc.get_roi(img_gray, tuple([x*resize_scale for x in roi_attr]))    
             contours, roi_bin = img_proc.get_roi_contours(roi_gray, image_parameters)
 
             # Measure focus of ROI write it to info string 
