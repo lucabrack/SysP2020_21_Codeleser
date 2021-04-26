@@ -194,6 +194,7 @@ class GUI(tk.Frame):
     def get_pics(self):
         try:
             ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             ssh.load_system_host_keys()
             ssh.connect(self.entry_ip.get(), username=self.entry_user.get(), password=self.entry_pw.get())
             
