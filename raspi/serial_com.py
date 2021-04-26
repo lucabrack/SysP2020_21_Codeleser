@@ -38,6 +38,7 @@ serial_led.on()
 def send_int_list(int_list):
     print(int_list)
     for i in int_list:
+        if i == 10: i += 1 #No byte can be 10 or it would be confused with LineFeed
         b = struct.pack('B', i)
         ser.write(b)
     ser.write(b'\n')
