@@ -22,9 +22,8 @@ def get_image_info(img, image_parameters, save_imgs=True, debug_folder_path='./r
     info_list = []
     
     img_gray = img_proc.grayscale(img)
-
     img_gray_resized, w_scale, h_scale = resize_original_img(img_gray, image_parameters)
-    
+
     # Search for Region of Interest
     roi_attr, img_bin = img_proc.get_roi_attr(img_gray_resized, image_parameters)
 
@@ -46,11 +45,11 @@ def get_image_info(img, image_parameters, save_imgs=True, debug_folder_path='./r
         info_list.append(roi_y)
         info_list.append(roi_area_scaled)
         
-        if 5 <= roi_area_scaled <= 100: #Check if the ROI is roughly the right size
+        if 5 <= roi_area_scaled <= 15: #Check if the ROI is roughly the right size
             # Make ROI gray and search for contours
             x,y,w,h = roi_attr
             roi_attr = (x*w_scale, y*h_scale, w*w_scale, h*h_scale)
-            roi_gray = img_proc.get_roi(img_gray, roi_attr)    
+            roi_gray = img_proc.get_roi(img_gray, roi_attr)
             contours, roi_bin = img_proc.get_roi_contours(roi_gray, image_parameters)
 
             # Measure focus of ROI write it to info string 
@@ -73,17 +72,6 @@ def get_image_info(img, image_parameters, save_imgs=True, debug_folder_path='./r
                 roi_copy = img_proc.bgr(roi_gray.copy())
                 img_proc.draw_contours(roi_copy, contours)
                 save_img(folder_path, '04_contour', roi_copy)
-                '''
-                roi_copy = img_proc.bgr(roi_gray.copy())
-                img_proc.draw_contours(roi_copy, circle(contours))
-                save_img(folder_path, '05_circle', roi_copy)
-                roi_copy = img_proc.bgr(roi_gray.copy())
-                img_proc.draw_contours(roi_copy, box(contours))
-                save_img(folder_path, '05_rectangle', roi_copy)
-                roi_copy = img_proc.bgr(roi_gray.copy())
-                img_proc.draw_contours(roi_copy, hull(contours))
-                save_img(folder_path, '05_hull', roi_copy)
-                '''
                 
 
     else: # Region of Interest was not found
@@ -149,13 +137,13 @@ def resize_original_img(img, image_parameters):
     resize_width = int(image_parameters['resize_width'])
     resize_height = resize_width / img_ratio
 
-    for i in range(2,10):
+    for i in range(2,20):
         if w % i == 0:
             if w/i <= resize_width:
                 w_resize_scale = i
                 break
     
-    for i in range(2,10):
+    for i in range(2,15):
         if h % i == 0:
             if h/i <= resize_height:
                 h_resize_scale = i
