@@ -105,7 +105,7 @@ class GUI(tk.Frame):
 
     def send_command(self):
         try:
-            with serial.Serial(timeout=5.0) as ser:
+            with serial.Serial(timeout=10.0) as ser:
                 ser.port = self.entry_port.get()
                 ser.baudrate = int(self.entry_bdrate.get())
                 ser.open()
