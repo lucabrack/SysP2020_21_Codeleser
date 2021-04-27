@@ -39,6 +39,7 @@ def send_int_list(int_list):
     print(int_list)
     for i in int_list:
         if i == 10: i += 1 #No byte can be 10 or it would be confused with LineFeed
+        if i > 255: i == 255 #Byte can't be bigger than 255
         b = struct.pack('B', i)
         ser.write(b)
     ser.write(b'\n')
