@@ -17,7 +17,6 @@ class Camera:
 
     def open(self):
         self.camera = PiCamera(resolution=self.resolution, framerate=self.framerate)
-        self.rawCapture = PiRGBArray(self.camera)
         time.sleep(5)
         print("Camera opened")
     
@@ -25,13 +24,6 @@ class Camera:
         self.camera.close()
 
     def capture_image(self):
-        self.truncate_output()
-        self.camera.capture(self.rawCapture, format=self.format)
-        return self.rawCapture.array
-
-    def capture_continous(self):
-        return self.camera.capture_continuous(self.rawCapture,
-                    format=self.format, use_video_port=True)
-
-    def truncate_output(self):
-        self.rawCapture.truncate(0) #empty output for next Image
+        with PiRGBArray(self.camera) as rawCapture:
+            self.camera.capture(rawCapture, format=self.format, use_video_port=True)
+            return rawCapture.array
