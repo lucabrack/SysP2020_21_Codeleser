@@ -23,10 +23,7 @@ def get_image_info(img, image_parameters, save_imgs=True, debug_folder_path='./r
     
     img_gray = img_proc.grayscale(img)
 
-    resize_width = int(image_parameters['resize_width'])
-    resize_height = int(image_parameters['resize_height'])
-    resize_scale = img.shape[1]//resize_width
-    img_gray_resized = cv2.resize(img_gray,(resize_width,resize_height))
+    img_gray_resized, w_scale, h_scale = resize_original_img(img_gray, image_parameters)
     
     # Search for Region of Interest
     roi_attr, img_bin = img_proc.get_roi_attr(img_gray_resized, image_parameters)
@@ -34,7 +31,7 @@ def get_image_info(img, image_parameters, save_imgs=True, debug_folder_path='./r
     # save the images for debugging purposes
     folder_path = create_img_folder(debug_folder_path, max_saves=max_saves)
     if save_imgs:
-        save_img(folder_path, "00_img", cv2.resize(img,(resize_width,resize_height)))
+        save_img(folder_path, "00_img", img_gray_resized)
         img_bin_bgr = img_proc.bgr(img_bin.copy())
         if roi_attr is not None:
             img_proc.draw_rectangle(img_bin_bgr, roi_attr)
@@ -49,9 +46,11 @@ def get_image_info(img, image_parameters, save_imgs=True, debug_folder_path='./r
         info_list.append(roi_y)
         info_list.append(roi_area_scaled)
         
-        if 5 <= roi_area_scaled <= 13: #Check if the ROI is roughly the right size
+        if 5 <= roi_area_scaled <= 100: #Check if the ROI is roughly the right size
             # Make ROI gray and search for contours
-            roi_gray = img_proc.get_roi(img_gray, tuple([x*resize_scale for x in roi_attr]))    
+            x,y,w,h = roi_attr
+            roi_attr = (x*w_scale, y*h_scale, w*w_scale, h*h_scale)
+            roi_gray = img_proc.get_roi(img_gray, roi_attr)    
             contours, roi_bin = img_proc.get_roi_contours(roi_gray, image_parameters)
 
             # Measure focus of ROI write it to info string 
@@ -141,6 +140,30 @@ def save_info_list(folder_path, info_list):
     else:
         print("Info String could not be saved.")
         print("Folder Path " + str(folder_path) + " does not exist.")
+
+
+def resize_original_img(img, image_parameters):
+    h, w = img.shape[:2]
+    img_ratio = w / h
+
+    resize_width = int(image_parameters['resize_width'])
+    resize_height = resize_width / img_ratio
+
+    for i in range(2,10):
+        if w % i == 0:
+            if w/i <= resize_width:
+                w_resize_scale = i
+                break
+    
+    for i in range(2,10):
+        if h % i == 0:
+            if h/i <= resize_height:
+                h_resize_scale = i
+                break
+    
+    img_resized = cv2.resize(img,(w//w_resize_scale,h//h_resize_scale))
+
+    return img_resized, w_resize_scale, h_resize_scale
 
 
 ## Main method
