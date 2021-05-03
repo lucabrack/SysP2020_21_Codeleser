@@ -26,7 +26,6 @@ class GUI(tk.Frame):
         super().__init__(master)
         self.master = master
         self.pack()
-        self.serial_answer = ''
         self.output_folder = ''
         self.code_img = array2image(np.ones((IMG_SIZE,IMG_SIZE,3), np.uint8)*255)
         self.create_widgets()
@@ -57,7 +56,7 @@ class GUI(tk.Frame):
     
         self.label_antwort = tk.Label(self, text='Antwort: ')
         self.label_antwort.grid(row=1)
-        self.entry_antwort = tk.Entry(self, width=70)
+        self.entry_antwort = tk.Entry(self, width=80)
         self.entry_antwort.grid(row=1,column=1,columnspan=9,sticky='W')      
         
         self.button_generate = tk.Button(self, text="Code generieren",
@@ -125,24 +124,21 @@ class GUI(tk.Frame):
                     if recv_byte == b'\n': # Messsage fully recieved
                         print("Message recieved!")
                         if cmd != 'shoot' and cmd != 'save':
-                            self.serial_answer = ''
                             self.entry_antwort.delete(0,len(self.entry_antwort.get()))
                             self.entry_antwort.insert(0, recv_data)
                         else:
-                            self.serial_answer = struct.unpack('B'*len(recv_data), recv_data)
+                            serial_answer = struct.unpack('B'*len(recv_data), recv_data)
                             self.entry_antwort.delete(0,len(self.entry_antwort.get()))
-                            self.entry_antwort.insert(0, self.serial_answer)
+                            self.entry_antwort.insert(0, serial_answer)
                         break
                     elif not recv_byte: # ser.read timed out
                         print("No Message recieved!")
-                        self.serial_answer = ''
                         self.entry_antwort.delete(0,len(self.entry_antwort.get()))
-                        self.entry_antwort.insert(0, "Keine Antwort erhalten! Überprüfe UART-Verbindung und COM-Port!")
+                        self.entry_antwort.insert(0, "Keine Antwort erhalten! Überprüfe UART-Verbindung und COM-Port! Läuft das Communication-Programm auf dem Raspi?")
                         break
                     recv_data += recv_byte
            
         except Exception as e:
-            self.serial_answer = ''
             self.entry_antwort.delete(0,len(self.entry_antwort.get()))
             self.entry_antwort.insert(0, e)
 
@@ -151,17 +147,22 @@ class GUI(tk.Frame):
     def generate_code(self):
         self.code_img = array2image(np.ones((IMG_SIZE,IMG_SIZE,3), np.uint8)*255)
 
-        info_tuple = self.serial_answer
-        if not info_tuple: pass
+        info_string = self.entry_antwort.get().replace("[","").replace("]","").replace(",","")
+        info_list = info_string.split(' ')
+        if len(info_list) < 50: 
+            print("Can't generate Code from Answer!")
+            self.label_image.configure(image=self.code_img)
+            self.label_image.image = self.code_img
+            return
         
         # First 5 infos are for ROI
-        shapes_tuple = info_tuple[5:]
+        info_list = info_list[5:]
         shapes_list = []
 
         # Group 3 entries together (shape form, x, y)
         tmp_l = []
-        for i in range(len(shapes_tuple)):
-            tmp_l.append(int(shapes_tuple[i]))
+        for i in range(len(info_list)):
+            tmp_l.append(int(info_list[i]))
             if (i+1) % 3 == 0:
                 shapes_list.append(tmp_l)
                 tmp_l = []
