@@ -45,7 +45,7 @@ def get_image_info(img, image_parameters, save_imgs=True, debug_folder_path='./r
         info_list.append(roi_y)
         info_list.append(roi_area_scaled)
         
-        if 5 <= roi_area_scaled <= 15: #Check if the ROI is roughly the right size
+        if 5 <= roi_area_scaled <= 50: #Check if the ROI is roughly the right size
             # Make ROI gray and search for contours
             x,y,w,h = roi_attr
             roi_attr = (x*w_scale, y*h_scale, w*w_scale, h*h_scale)
